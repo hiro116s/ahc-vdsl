@@ -47,43 +47,81 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b ${{ steps.branch.outputs.branch_name }}
 
+      - name: Get issue details
+        id: issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Use gh CLI to safely get issue details as JSON
+          ISSUE_JSON=$(gh issue view ${{ github.event.issue.number }} --json title,body)
+          
+          # Extract and save to files to avoid shell escaping issues
+          echo "$ISSUE_JSON" | jq -r '.title' > /tmp/issue_title.txt
+          echo "$ISSUE_JSON" | jq -r '.body' > /tmp/issue_body.txt
+          
+          echo "Issue title: $(cat /tmp/issue_title.txt)"
+          echo "Issue body saved to /tmp/issue_body.txt"
+
       - name: Call Claude API and apply changes
         id: claude
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          # Get issue details
-          ISSUE_TITLE="${{ github.event.issue.title }}"
-          ISSUE_BODY="${{ github.event.issue.body }}"
+          # Read issue details from files (safely escaped)
+          ISSUE_TITLE=$(cat /tmp/issue_title.txt)
+          ISSUE_BODY=$(cat /tmp/issue_body.txt)
           
-          # Prepare the prompt
-          PROMPT="You are an expert software engineer. Based on the following GitHub issue, provide code changes.
+          # Get repository structure
+          REPO_STRUCTURE=$(find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.json" -o -name "*.html" -o -name "*.css" -o -name "*.md" \) ! -path "./node_modules/*" ! -path "./.git/*" | head -50 | xargs ls -la 2>/dev/null || echo 'Unable to list files')
+          
+          # Read key source files for context
+          SOURCE_FILES=""
+          for file in $(find . -type f \( -name "*.ts" -o -name "*.js" \) ! -path "./node_modules/*" ! -path "./.git/*" | head -10); do
+            if [ -f "$file" ]; then
+              SOURCE_FILES="${SOURCE_FILES}
 
-          Issue Title: ${ISSUE_TITLE}
+          === ${file} ===
+          $(cat "$file" | head -200)"
+            fi
+          done
           
-          Issue Description:
-          ${ISSUE_BODY}
+          # Create prompt file to avoid escaping issues
+          cat > /tmp/prompt.txt << 'PROMPT_END'
+          You are an expert software engineer. Based on the following GitHub issue, provide code changes.
+
+          PROMPT_END
           
-          Repository structure:
-          $(find . -type f -name "*.ts" -o -name "*.js" -o -name "*.json" -o -name "*.html" -o -name "*.css" -o -name "*.md" | head -50 | xargs ls -la 2>/dev/null || echo 'Unable to list files')
+          echo "Issue Title: ${ISSUE_TITLE}" >> /tmp/prompt.txt
+          echo "" >> /tmp/prompt.txt
+          echo "Issue Description:" >> /tmp/prompt.txt
+          echo "${ISSUE_BODY}" >> /tmp/prompt.txt
+          echo "" >> /tmp/prompt.txt
+          echo "Repository structure:" >> /tmp/prompt.txt
+          echo "${REPO_STRUCTURE}" >> /tmp/prompt.txt
+          echo "" >> /tmp/prompt.txt
+          echo "Key source files:" >> /tmp/prompt.txt
+          echo "${SOURCE_FILES}" >> /tmp/prompt.txt
           
+          cat >> /tmp/prompt.txt << 'PROMPT_END'
+
           Please analyze the issue and provide:
           1. A summary of what changes are needed
           2. The specific file changes in the following format:
-          
+
           For each file that needs to be created or modified, use this exact format:
-          
+
           ===FILE_START===
           PATH: <file_path>
           ACTION: <create|modify>
           ===CONTENT_START===
           <full file content here>
           ===CONTENT_END===
+
+          Make sure to provide complete, working code. Include ALL content for each file, not just the changes.
+          PROMPT_END
           
-          Make sure to provide complete, working code."
-          
-          # Escape the prompt for JSON
-          ESCAPED_PROMPT=$(echo "$PROMPT" | jq -Rs .)
+          # Escape the prompt for JSON using jq
+          ESCAPED_PROMPT=$(cat /tmp/prompt.txt | jq -Rs .)
           
           # Call Claude API
           RESPONSE=$(curl -s -X POST https://api.anthropic.com/v1/messages \
@@ -112,6 +150,7 @@ jobs:
           
           # Save response for debugging
           echo "$CONTENT" > /tmp/claude_response.txt
+          echo "Claude response saved to /tmp/claude_response.txt"
           
           # Parse and apply file changes
           echo "$CONTENT" | awk '
@@ -132,6 +171,7 @@ jobs:
               }
               # Write content to file
               print content > path
+              close(path)
               print "Written: " path
             }
             path=""; action=""; content=""
@@ -140,28 +180,37 @@ jobs:
           in_content { content = content (content=="" ? "" : "\n") $0 }
           '
           
-          # Save summary for PR description
-          SUMMARY=$(echo "$CONTENT" | sed -n '1,/===FILE_START===/p' | head -n -1)
-          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          # Save summary for PR description (text before first FILE_START)
+          SUMMARY=$(echo "$CONTENT" | awk '/===FILE_START===/{exit} {print}')
+          
+          # Use a delimiter that won't appear in the content
+          EOF_MARKER="EOF_$(date +%s)"
+          echo "summary<<${EOF_MARKER}" >> $GITHUB_OUTPUT
           echo "$SUMMARY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "${EOF_MARKER}" >> $GITHUB_OUTPUT
 
       - name: Check for changes
         id: changes
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected:"
+            git status --porcelain
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
           fi
 
       - name: Commit changes
         if: steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          ISSUE_TITLE=$(cat /tmp/issue_title.txt)
           git add -A
           git commit -m "AI: Implement changes for issue #${{ github.event.issue.number }}
 
-          ${{ github.event.issue.title }}
+          ${ISSUE_TITLE}
           
           Closes #${{ github.event.issue.number }}"
 
@@ -175,27 +224,34 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_BODY="## AI-Generated Changes for Issue #${{ github.event.issue.number }}
+          ISSUE_TITLE=$(cat /tmp/issue_title.txt)
+          ISSUE_BODY=$(cat /tmp/issue_body.txt)
+          SUMMARY='${{ steps.claude.outputs.summary }}'
+          
+          # Create PR body file to handle special characters
+          cat > /tmp/pr_body.md << PR_BODY_END
+          ## AI-Generated Changes for Issue #${{ github.event.issue.number }}
           
           ### Original Issue
-          **${{ github.event.issue.title }}**
+          **${ISSUE_TITLE}**
           
-          ${{ github.event.issue.body }}
+          ${ISSUE_BODY}
           
           ---
           
           ### AI Analysis & Changes
-          ${{ steps.claude.outputs.summary }}
+          ${SUMMARY}
           
           ---
           
-          ⚠️ **This PR was automatically generated by Claude (${{ env.ANTHROPIC_MODEL }}). Please review carefully before merging.**
+          ⚠️ **This PR was automatically generated by Claude (${ANTHROPIC_MODEL}). Please review carefully before merging.**
           
-          Closes #${{ github.event.issue.number }}"
+          Closes #${{ github.event.issue.number }}
+          PR_BODY_END
           
           gh pr create \
-            --title "AI: ${{ github.event.issue.title }}" \
-            --body "$PR_BODY" \
+            --title "AI: ${ISSUE_TITLE}" \
+            --body-file /tmp/pr_body.md \
             --base main \
             --head ${{ steps.branch.outputs.branch_name }}
 
@@ -207,10 +263,10 @@ jobs:
           gh issue comment ${{ github.event.issue.number }} \
             --body "🤖 AI Coding Assistant has created a pull request for this issue.
             
-            Branch: \`${{ steps.branch.outputs.branch_name }}\`
-            Model: \`${{ env.ANTHROPIC_MODEL }}\`
+          Branch: \`${{ steps.branch.outputs.branch_name }}\`
+          Model: \`${ANTHROPIC_MODEL}\`
             
-            Please review the changes and provide feedback!"
+          Please review the changes and provide feedback!"
 
       - name: Comment on issue (no changes)
         if: steps.changes.outputs.has_changes == 'false'
@@ -220,6 +276,20 @@ jobs:
           gh issue comment ${{ github.event.issue.number }} \
             --body "🤖 AI Coding Assistant analyzed this issue but could not determine specific code changes to make.
             
-            Model: \`${{ env.ANTHROPIC_MODEL }}\`
+          Model: \`${ANTHROPIC_MODEL}\`
             
-            Please provide more details in the issue description, or manually implement the changes."
+          Please provide more details in the issue description, or manually implement the changes.
+          
+          Debug: Check the workflow run logs for the Claude response."
+
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: |
+            /tmp/claude_response.txt
+            /tmp/prompt.txt
+            /tmp/issue_title.txt
+            /tmp/issue_body.txt
+          retention-days: 7
