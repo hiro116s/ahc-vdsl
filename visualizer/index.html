@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHC VDSL visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .input-section label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .seed-input-group {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .seed-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .seed-input-group input[type="number"] {
+            width: 200px;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .seed-input-group input[type="number"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .mode-selector {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .mode-selector h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-button {
+            padding: 10px 20px;
+            border: 2px solid #2196F3;
+            background-color: white;
+            color: #2196F3;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .mode-button:hover {
+            background-color: #e3f2fd;
+        }
+
+        .mode-button.active {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        details {
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+
+        details[open] {
+            background-color: white;
+        }
+
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 5px;
+            color: #555;
+            user-select: none;
+        }
+
+        summary:hover {
+            color: #2196F3;
+        }
+
+        details textarea {
+            margin-top: 10px;
+        }
+
+        .error-message {
+            padding: 15px;
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            color: #c62828;
+        }
+
+        .info-text {
+            padding: 8px 12px;
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 4px;
+            color: #2e7d32;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .info-textarea {
+            width: 100%;
+            height: 200px;
+            padding: 8px;
+            background-color: #fff3e0;
+            border: 1px solid #ffe0b2;
+            border-radius: 4px;
+            color: #ef6c00;
+            font-family: monospace;
+            font-size: 15px;
+            resize: both;
+        }
+
+        .debug-textarea {
+            width: 100%;
+            height: 200px;
+            padding: 8px;
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            color: #1565c0;
+            font-family: monospace;
+            font-size: 15px;
+            resize: both;
+        }
+
+        .debug-label {
+            font-weight: bold;
+            color: #1565c0;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>AHC VDSL Visualizer</h1>
+
+        <div class="seed-input-group">
+            <label for="seedInput">Seed (0-999):</label>
+            <input type="number" id="seedInput" min="0" max="999" value="0" placeholder="0">
+            <button id="refreshBtn"
+                style="margin-left: 10px; padding: 8px 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 4px;">更新</button>
+            <button id="collapseAllBtn"
+                style="margin-left: 10px; padding: 8px 16px; cursor: pointer; background-color: #2196F3; color: white; border: none; border-radius: 4px;">入力欄を折り畳む</button>
+        </div>
+
+        <div class="mode-selector">
+            <h3>表示モード</h3>
+            <div class="mode-buttons">
+                <button class="mode-button active" data-mode="default">Default mode</button>
+            </div>
+        </div>
+
+        <div id="controls" style="margin-top: 10px; display: none;">
+            <input type="range" id="frameSlider" min="0" value="0" step="1" style="width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="number" id="frameNumberInput" min="1" value="1"
+                        style="width: 60px; text-align: right; padding: 2px;">
+                    <span id="totalFramesDisplay">/ 0</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="display: flex; align-items: center; font-size: 12px; color: #555;">
+                        <span style="margin-right: 5px;">Speed:</span>
+                        <input type="range" id="speedSlider" min="1" max="60" value="20" style="width: 80px;">
+                        <span id="speedValue" style="margin-left: 5px; width: 30px;">20fps</span>
+                    </div>
+                    <button id="prevBtn" style="padding: 5px 10px;">&lt;</button>
+                    <button id="playBtn" style="padding: 5px 10px;">Play</button>
+                    <button id="nextBtn" style="padding: 5px 10px;">&gt;</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="scoreDisplay"
+            style="margin-top: 10px; font-weight: bold; font-size: 24px; color: #333; min-height: 35px; border-top: 1px solid #ccc; padding-top: 10px; margin-bottom: 10px;">
+        </div>
+
+        <div id="errorSection" style="display: none;"></div>
+        <div id="visSection">
+            <!-- Visualization content will go here -->
+        </div>
+
+        <details open>
+            <summary>標準エラー出力</summary>
+            <textarea id="stderrInput" placeholder="Standard Error data..."></textarea>
+        </details>
+    </div>
+
+    <script>
+        const seedInput = document.getElementById('seedInput');
+        const stderrInput = document.getElementById('stderrInput');
+
+        let parsedModes = {};
+        let activeMode = "default";
+
+        // frames is now a reference to the active mode's frames
+        let frames = [];
+        let currentFrameIndex = 0;
+        let isPlaying = false;
+        let playInterval = null;
+        let currentStderrText = "";
+
+        // イベントリスナー
+        seedInput.addEventListener('input', loadFilesForSeed);
+        document.getElementById('refreshBtn').addEventListener('click', loadFilesForSeed);
+
+        stderrInput.addEventListener('input', parseAndVisualize);
+
+        // Animation Controls
+        const frameSlider = document.getElementById('frameSlider');
+        // const frameCounter = document.getElementById('frameCounter'); // Removed
+        const frameNumberInput = document.getElementById('frameNumberInput');
+        const totalFramesDisplay = document.getElementById('totalFramesDisplay');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+
+        // Mode Controls
+        const modeButtonsContainer = document.querySelector('.mode-buttons');
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const playBtn = document.getElementById('playBtn');
+
+        frameSlider.addEventListener('input', (e) => {
+            currentFrameIndex = parseInt(e.target.value);
+            renderCurrentFrame();
+            updateControls();
+        });
+
+        frameNumberInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value);
+            if (isNaN(val)) val = 1;
+            if (val < 1) val = 1;
+            if (val > frames.length) val = frames.length;
+            currentFrameIndex = val - 1;
+            renderCurrentFrame();
+            updateControls();
+        });
+
+        speedSlider.addEventListener('input', (e) => {
+            const fps = parseInt(e.target.value);
+            speedValue.textContent = fps + "fps";
+            if (isPlaying) {
+                // Restart interval with new speed
+                clearInterval(playInterval);
+                playInterval = setInterval(() => {
+                    if (currentFrameIndex < frames.length - 1) {
+                        currentFrameIndex++;
+                    } else {
+                        togglePlay();
+                        return;
+                    }
+                    renderCurrentFrame();
+                    updateControls();
+                }, 1000 / fps);
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentFrameIndex > 0) {
+                currentFrameIndex--;
+                renderCurrentFrame();
+                updateControls();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentFrameIndex < frames.length - 1) {
+                currentFrameIndex++;
+                renderCurrentFrame();
+                updateControls();
+            }
+        });
+
+        playBtn.addEventListener('click', togglePlay);
+
+        function togglePlay() {
+            if (isPlaying) {
+                clearInterval(playInterval);
+                playBtn.textContent = 'Play';
+                isPlaying = false;
+            } else {
+                if (frames.length > 0 && currentFrameIndex >= frames.length - 1) {
+                    currentFrameIndex = 0;
+                }
+                playBtn.textContent = 'Pause';
+                isPlaying = true;
+                const fps = parseInt(speedSlider.value);
+                playInterval = setInterval(() => {
+                    if (currentFrameIndex < frames.length - 1) {
+                        currentFrameIndex++;
+                    } else {
+                        // Loop or stop? Stop for now.
+                        togglePlay();
+                        return;
+                    }
+                    renderCurrentFrame();
+                    updateControls();
+                }, 1000 / fps);
+            }
+        }
+
+        function updateControls() {
+            frameSlider.value = currentFrameIndex;
+            frameNumberInput.value = currentFrameIndex + 1;
+            totalFramesDisplay.textContent = `/ ${Math.max(frames.length, 1)}`;
+            // frameCounter.textContent = `${currentFrameIndex + 1} / ${Math.max(frames.length, 1)}`;
+
+            if (frames.length <= 1) {
+                document.getElementById('controls').style.display = 'none';
+            } else {
+                document.getElementById('controls').style.display = 'block';
+            }
+        }
+
+        // 入力欄を折り畳むボタン
+        document.getElementById('collapseAllBtn').addEventListener('click', () => {
+            const details = document.querySelectorAll('details');
+            const allOpen = Array.from(details).every(d => d.open);
+            details.forEach(d => {
+                if (allOpen) d.removeAttribute('open');
+                else d.setAttribute('open', '');
+            });
+            document.getElementById('collapseAllBtn').textContent = allOpen ? '入力欄を展開' : '入力欄を折り畳む';
+        });
+
+        async function loadFilesForSeed() {
+            const seed = seedInput.value;
+            // Reset
+            stderrInput.value = "";
+
+            try {
+                // Adjust paths based on workspace structure
+                // Assuming standard visualizer structure
+                const [errRes] = await Promise.all([
+                    fetch(`err/${seed}.txt`)
+                ]);
+
+                if (errRes.ok) {
+                    const text = await errRes.text();
+                    currentStderrText = text;
+                    if (text.length > 1000) {
+                        stderrInput.value = text.substring(0, 1000) + "\n... (truncated)";
+                    } else {
+                        stderrInput.value = text;
+                    }
+                } else {
+                    currentStderrText = "";
+                    stderrInput.value = "";
+                }
+            } catch (e) {
+                console.error("Error loading files:", e);
+            }
+
+            // Proceed to parse
+            parseAndVisualize();
+        }
+
+        function parseAndVisualize(e) {
+            if (e && e.target === stderrInput) {
+                currentStderrText = stderrInput.value;
+            }
+            // Fallback if empty (e.g. on reload if no loadFiles triggered yet, though loadFiles is called at end)
+            if (!currentStderrText && stderrInput.value) {
+                currentStderrText = stderrInput.value;
+            }
+
+            const stderrText = currentStderrText;
+            parsedModes = {};
+            // Init default just in case
+            parsedModes["default"] = [];
+
+            // Temporary storage for current commands for each mode
+            // { modeName: [commands] }
+            let pendingCommands = {};
+            let pendingRawText = {};
+
+            currentFrameIndex = 0;
+            if (isPlaying) togglePlay();
+
+            if (!stderrText) {
+                switchMode(activeMode); // Reset to empty
+                return;
+            }
+
+            const lines = stderrText.split('\n');
+            let lineIdx = 0;
+
+            while (lineIdx < lines.length) {
+                const line = lines[lineIdx].trim();
+
+                // Parse $v prefix
+                // Formats:
+                // $v(MODE) COMMAND ...
+                // $v COMMAND ... (implies default)
+
+                let mode = "default";
+                let remaining = "";
+
+                if (line.startsWith('$v(')) {
+                    const closeParen = line.indexOf(')');
+                    if (closeParen > 3) {
+                        mode = line.substring(3, closeParen);
+                        remaining = line.substring(closeParen + 1).trim();
+                    } else {
+                        // Malformed? treat as normal line or ignore
+                        lineIdx++; continue;
+                    }
+                } else if (line.startsWith('$v')) {
+                    mode = "default";
+                    remaining = line.substring(2).trim();
+                } else {
+                    lineIdx++;
+                    continue;
+                }
+
+                if (!parsedModes[mode]) parsedModes[mode] = [];
+                if (!pendingCommands[mode]) pendingCommands[mode] = [];
+                if (!pendingRawText[mode]) pendingRawText[mode] = "";
+
+                // Accumulate raw text
+                pendingRawText[mode] += lines[lineIdx] + "\n";
+
+                const parts = remaining.split(/\s+/);
+                const cmd = parts[0];
+
+                if (cmd === 'COMMIT') {
+                    if (pendingCommands[mode].length > 0) {
+                        parsedModes[mode].push({
+                            commands: pendingCommands[mode],
+                            rawText: pendingRawText[mode],
+                            showDebug: pendingCommands[mode].some(c => c.type === 'DEBUG')
+                        });
+                        pendingCommands[mode] = [];
+                        pendingRawText[mode] = "";
+                    }
+                    lineIdx++;
+                } else if (cmd === 'DEBUG') {
+                    pendingCommands[mode].push({ type: 'DEBUG' });
+                    lineIdx++;
+                } else if (cmd === 'TEXTAREA') {
+                    const taIndex = remaining.indexOf('TEXTAREA');
+                    const text = remaining.substring(taIndex + 8).trim();
+                    pendingCommands[mode].push({ type: 'TEXTAREA', text });
+                    lineIdx++;
+                } else if (cmd === 'SCORE') {
+                    const sIndex = remaining.indexOf('SCORE');
+                    const score = remaining.substring(sIndex + 5).trim();
+                    pendingCommands[mode].push({ type: 'SCORE', score });
+                    lineIdx++;
+                } else if (cmd === 'GRID') {
+                    if (parts.length < 6) {
+                        lineIdx++;
+                        continue;
+                    }
+                    const H = parseInt(parts[1]);
+                    const W = parseInt(parts[2]);
+                    const borderColor = parts[3];
+                    const textColor = parts[4];
+                    const defaultCellColor = parts[5];
+
+                    // Init default grids
+                    let gridColors = [];
+                    for (let r = 0; r < H; r++) gridColors.push(new Array(W).fill(defaultCellColor));
+
+                    let gridTexts = [];
+                    for (let r = 0; r < H; r++) gridTexts.push(new Array(W).fill(""));
+
+                    let gridLines = [];
+
+                    lineIdx++;
+
+                    // Parse blocks
+                    while (lineIdx < lines.length) {
+                        let header = lines[lineIdx].trim();
+                        // skip blank lines
+                        while (header === '' && lineIdx < lines.length - 1) {
+                            pendingRawText[mode] += lines[lineIdx] + "\n"; // Capture blank lines if any
+                            lineIdx++;
+                            header = lines[lineIdx].trim();
+                        }
+
+                        // Check if known header
+                        if (header !== 'CELL_COLORS' && header !== 'CELL_COLORS_POS' && header !== 'CELL_TEXT' && header !== 'LINES') {
+                            break;
+                        }
+
+                        // Capture the header line
+                        pendingRawText[mode] += lines[lineIdx] + "\n";
+
+                        if (header === 'CELL_COLORS') {
+                            lineIdx++;
+                            for (let i = 0; i < H; i++) {
+                                if (lineIdx >= lines.length) break;
+                                pendingRawText[mode] += lines[lineIdx] + "\n";
+                                const rowLine = lines[lineIdx].trim();
+                                const rowColors = rowLine.split(/\s+/);
+                                for (let c = 0; c < Math.min(W, rowColors.length); c++) {
+                                    gridColors[i][c] = rowColors[c];
+                                }
+                                lineIdx++;
+                            }
+                        } else if (header === 'CELL_COLORS_POS') {
+                            lineIdx++;
+                            if (lineIdx < lines.length) {
+                                pendingRawText[mode] += lines[lineIdx] + "\n";
+                                const n = parseInt(lines[lineIdx].trim());
+                                lineIdx++;
+                                for (let k = 0; k < n; k++) {
+                                    if (lineIdx >= lines.length) break;
+                                    pendingRawText[mode] += lines[lineIdx] + "\n";
+                                    const lLine = lines[lineIdx].trim();
+                                    const lParts = lLine.split(/\s+/);
+                                    if (lParts.length >= 2) {
+                                        const color = lParts[0];
+                                        const count = parseInt(lParts[1]);
+                                        for (let j = 0; j < count; j++) {
+                                            if (2 + j * 2 + 1 < lParts.length) {
+                                                const r = parseInt(lParts[2 + j * 2]);
+                                                const c = parseInt(lParts[2 + j * 2 + 1]);
+                                                if (r >= 0 && r < H && c >= 0 && c < W) {
+                                                    gridColors[r][c] = color;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    lineIdx++;
+                                }
+                            }
+                        } else if (header === 'CELL_TEXT') {
+                            lineIdx++;
+                            for (let i = 0; i < H; i++) {
+                                if (lineIdx >= lines.length) break;
+                                pendingRawText[mode] += lines[lineIdx] + "\n";
+                                const rowLine = lines[lineIdx].trim();
+                                const regex = /"([^"]*)"|([^\s]+)/g;
+                                let match;
+                                let c = 0;
+                                while ((match = regex.exec(rowLine)) !== null && c < W) {
+                                    gridTexts[i][c] = match[1] !== undefined ? match[1] : match[2];
+                                    c++;
+                                }
+                                lineIdx++;
+                            }
+                        } else if (header === 'LINES') {
+                            lineIdx++;
+                            if (lineIdx < lines.length) {
+                                pendingRawText[mode] += lines[lineIdx] + "\n";
+                                const lineN = parseInt(lines[lineIdx].trim());
+                                lineIdx++;
+                                for (let k = 0; k < lineN; k++) {
+                                    if (lineIdx >= lines.length) break;
+                                    pendingRawText[mode] += lines[lineIdx] + "\n";
+                                    const lLine = lines[lineIdx].trim();
+                                    const lParts = lLine.split(/\s+/);
+                                    if (lParts.length >= 2) {
+                                        const color = lParts[0];
+                                        const count = parseInt(lParts[1]);
+                                        const points = [];
+                                        for (let p = 0; p < count; p++) {
+                                            if (2 + p * 2 + 1 < lParts.length) {
+                                                points.push({
+                                                    x: parseInt(lParts[2 + p * 2]),
+                                                    y: parseInt(lParts[2 + p * 2 + 1])
+                                                });
+                                            }
+                                        }
+                                        gridLines.push({ color, points });
+                                    }
+                                    lineIdx++;
+                                }
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+
+                    pendingCommands[mode].push({
+                        type: 'GRID',
+                        H, W, borderColor, textColor,
+                        gridColors, gridTexts, gridLines
+                    });
+                } else {
+                    lineIdx++;
+                }
+            }
+
+            // Flush remaining commands
+            for (const m in pendingCommands) {
+                if (pendingCommands[m].length > 0) {
+                    parsedModes[m].push({
+                        commands: pendingCommands[m],
+                        rawText: pendingRawText[m] || "",
+                        showDebug: pendingCommands[m].some(c => c.type === 'DEBUG')
+                    });
+                }
+            }
+
+            // Clean up empty modes if default is also empty
+            const modes = Object.keys(parsedModes).filter(m => parsedModes[m].length > 0);
+            if (modes.length === 0) modes.push("default");
+
+            // Update Mode Selector UI
+            updateModeSelector(modes);
+
+            // Switch to previous active mode if exists, else first available
+            if (parsedModes[activeMode] && parsedModes[activeMode].length > 0) {
+                switchMode(activeMode);
+            } else if (modes.length > 0) {
+                switchMode(modes[0]);
+            } else {
+                switchMode("default");
+            }
+        }
+
+        function updateModeSelector(modes) {
+            modeButtonsContainer.innerHTML = '';
+            modes.sort(); // maybe sort?
+
+            // Ensure "default" comes first if it exists
+            const defaultIdx = modes.indexOf("default");
+            if (defaultIdx > -1) {
+                modes.splice(defaultIdx, 1);
+                modes.unshift("default");
+            }
+
+            modes.forEach(mode => {
+                const btn = document.createElement('button');
+                btn.className = 'mode-button';
+                if (mode === activeMode) btn.classList.add('active');
+                btn.textContent = mode;
+                btn.dataset.mode = mode;
+                btn.addEventListener('click', () => switchMode(mode));
+                modeButtonsContainer.appendChild(btn);
+            });
+        }
+
+        function switchMode(mode) {
+            activeMode = mode;
+            frames = parsedModes[mode] || [];
+
+            // Reset playback
+            currentFrameIndex = 0;
+            if (frames.length > 0) {
+                frameSlider.max = frames.length - 1;
+                currentFrameIndex = frames.length - 1; // Auto jump to end
+            } else {
+                frameSlider.max = 0;
+            }
+
+            // Update UI buttons highlight
+            const buttons = modeButtonsContainer.querySelectorAll('.mode-button');
+            buttons.forEach(b => {
+                if (b.dataset.mode === mode) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            updateControls();
+            renderCurrentFrame();
+        }
+
+        loadFilesForSeed(); // Load on valid startup
+
+        function renderCurrentFrame() {
+            const visContainer = document.getElementById('visSection');
+            visContainer.innerHTML = '';
+
+            // Layout Setup
+            visContainer.style.display = 'flex';
+            visContainer.style.alignItems = 'flex-start';
+            visContainer.style.gap = '20px';
+
+            // Left: Canvas Area
+            const canvasDiv = document.createElement('div');
+            canvasDiv.style.flex = '0 0 auto';
+            // Center content in canvasDiv?
+
+            // Right: Info Panel
+            const infoDiv = document.createElement('div');
+            infoDiv.style.width = '350px';
+            infoDiv.style.flexShrink = '0';
+            infoDiv.style.display = 'flex';
+            infoDiv.style.flexDirection = 'column';
+            infoDiv.style.gap = '10px';
+
+            visContainer.appendChild(canvasDiv);
+            visContainer.appendChild(infoDiv);
+
+            // Clear Score
+            document.getElementById('scoreDisplay').textContent = '';
+
+            if (frames.length === 0 || currentFrameIndex >= frames.length) return;
+
+            const frame = frames[currentFrameIndex];
+            const commands = frame.commands;
+
+            if (frame.showDebug) {
+                const debugContainer = document.createElement('div');
+                const label = document.createElement('div');
+                label.className = 'debug-label';
+                label.textContent = 'DEBUG';
+                debugContainer.appendChild(label);
+                const ta = document.createElement('textarea');
+                ta.className = 'debug-textarea';
+                ta.readOnly = true;
+                ta.value = frame.rawText;
+                debugContainer.appendChild(ta);
+                infoDiv.appendChild(debugContainer);
+            }
+
+            for (const cmd of commands) {
+                if (cmd.type === 'GRID') {
+                    renderGrid(canvasDiv, cmd.H, cmd.W, cmd.borderColor, cmd.textColor, cmd.gridColors, cmd.gridTexts, cmd.gridLines);
+                } else if (cmd.type === 'TEXTAREA') {
+                    const ta = document.createElement('textarea');
+                    ta.className = 'info-textarea';
+                    ta.readOnly = true;
+                    ta.value = cmd.text;
+                    infoDiv.appendChild(ta);
+                } else if (cmd.type === 'SCORE') {
+                    document.getElementById('scoreDisplay').textContent = `Score = ${cmd.score}`;
+                }
+            }
+        }
+
+        function renderGrid(container, H, W, borderColor, textColor, gridColors, gridTexts, gridLines) {
+            const canvasSize = 800;
+            // Calculate cell size to fit exactly in 800x800 (stretching if necessary)
+            const cellWidth = canvasSize / W;
+            const cellHeight = canvasSize / H;
+
+            // Adjust font size based on cell width
+            // Adjust to fit 5 chars: cellWidth / 5 is a safe upper bound for width (assuming 1em width per char is worst case)
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", canvasSize);
+            svg.setAttribute("height", canvasSize);
+            svg.style.margin = "10px 0";
+            svg.style.display = "block";
+            // Allow stroke to spill out
+            svg.style.overflow = "visible";
+
+            for (let y = 0; y < H; y++) {
+                for (let x = 0; x < W; x++) {
+                    const rect = document.createElementNS(svgNS, "rect");
+                    rect.setAttribute("x", x * cellWidth);
+                    rect.setAttribute("y", y * cellHeight);
+                    rect.setAttribute("width", cellWidth);
+                    rect.setAttribute("height", cellHeight);
+
+                    let fill = "#FFFFFF";
+                    if (y < gridColors.length && x < gridColors[y].length) {
+                        fill = gridColors[y][x];
+                    }
+
+                    rect.setAttribute("fill", fill);
+                    rect.setAttribute("stroke", borderColor);
+                    rect.setAttribute("stroke-width", "1");
+                    rect.setAttribute("vector-effect", "non-scaling-stroke");
+
+                    // Add tooltip for coordinates and text
+                    const title = document.createElementNS(svgNS, "title");
+                    let titleText = `(${y}, ${x})`;
+
+                    let textContent = "";
+                    if (gridTexts && y < gridTexts.length && x < gridTexts[y].length) {
+                        const rawText = gridTexts[y][x];
+                        titleText += `: ${rawText}`;
+
+                        if (rawText.length > 5) {
+                            textContent = rawText.substring(0, 5) + "...";
+                        } else {
+                            textContent = rawText;
+                        }
+                    }
+                    title.textContent = titleText;
+                    rect.appendChild(title);
+
+                    svg.appendChild(rect);
+
+                    // Render Text
+                    if (textContent) {
+                        // Dynamic font size calculation
+                        const charCount = textContent.length;
+                        const effectiveChars = Math.max(charCount, 1);
+
+                        // If text contains "...", it's effectively wider, treat "..." as ~1 char or simple length check
+                        let usedFontSize;
+                        if (charCount <= 4) {
+                            // Larger font for fewer characters
+                            // Use 0.8 factor to allow some margin
+                            usedFontSize = Math.min(cellHeight * 0.7, (cellWidth / effectiveChars) * 1.2);
+                        } else {
+                            // Standard size for long text (fits ~5-6 chars)
+                            // "12345..." length is 8, but we want it to fit in space of 5-6 chars
+                            usedFontSize = Math.min(cellHeight * 0.6, cellWidth / 5.5);
+                        }
+
+                        // Limit max font size to avoid absurdity on huge cells
+                        usedFontSize = Math.min(usedFontSize, 30);
+
+                        const textElement = document.createElementNS(svgNS, "text");
+                        textElement.setAttribute("x", x * cellWidth + cellWidth / 2);
+                        textElement.setAttribute("y", y * cellHeight + cellHeight / 2);
+                        textElement.setAttribute("fill", textColor);
+                        textElement.setAttribute("font-size", usedFontSize);
+                        textElement.setAttribute("font-family", "sans-serif");
+                        textElement.setAttribute("text-anchor", "middle");
+
+                        textElement.setAttribute("dominant-baseline", "middle");
+                        textElement.setAttribute("pointer-events", "none");
+                        textElement.textContent = textContent;
+                        svg.appendChild(textElement);
+                    }
+                }
+            }
+
+            // Render Lines
+            if (gridLines && gridLines.length > 0) {
+                for (const lineData of gridLines) {
+                    const color = lineData.color;
+                    const points = lineData.points;
+                    if (points.length < 2) continue;
+
+                    let pointsStr = "";
+                    for (const pt of points) {
+                        const px = pt.x * cellWidth + cellWidth / 2;
+                        const py = pt.y * cellHeight + cellHeight / 2;
+                        pointsStr += `${px},${py} `;
+                    }
+
+                    const polyline = document.createElementNS(svgNS, "polyline");
+                    polyline.setAttribute("points", pointsStr.trim());
+                    polyline.setAttribute("fill", "none");
+                    polyline.setAttribute("stroke", color);
+                    polyline.setAttribute("stroke-width", "3");
+                    polyline.setAttribute("stroke-linejoin", "round");
+                    polyline.setAttribute("stroke-linecap", "round");
+                    polyline.setAttribute("pointer-events", "none"); // Let clicks pass through
+                    svg.appendChild(polyline);
+
+                    // Draw circles at vertices
+                    const circleRadius = Math.min(cellWidth, cellHeight) * 0.05;
+                    for (const pt of points) {
+                        const px = pt.x * cellWidth + cellWidth / 2;
+                        const py = pt.y * cellHeight + cellHeight / 2;
+
+                        const circle = document.createElementNS(svgNS, "circle");
+                        circle.setAttribute("cx", px);
+                        circle.setAttribute("cy", py);
+                        circle.setAttribute("r", circleRadius);
+                        circle.setAttribute("fill", color);
+                        circle.setAttribute("pointer-events", "none");
+                        svg.appendChild(circle);
+                    }
+                }
+            }
+
+            container.appendChild(svg);
+        }
+    </script>
+</body>
+
+</html>
