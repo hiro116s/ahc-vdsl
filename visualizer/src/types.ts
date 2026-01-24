@@ -19,6 +19,8 @@ export interface GridCommand {
     gridColors: string[][];
     gridTexts: string[][];
     gridLines: GridLine[];
+    wallVertical: string[];
+    wallHorizontal: string[];
 }
 
 export interface TextAreaCommand {

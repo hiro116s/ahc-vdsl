@@ -126,6 +126,17 @@ function parseGridCommand(
 
     const gridLines: GridLine[] = [];
 
+    // Initialize walls with default values (all walls exist)
+    const wallVertical: string[] = [];
+    for (let j = 0; j <= W; j++) {
+        wallVertical.push('Y'.repeat(H));
+    }
+
+    const wallHorizontal: string[] = [];
+    for (let i = 0; i <= H; i++) {
+        wallHorizontal.push('Y'.repeat(W));
+    }
+
     lineIdx++;
 
     while (lineIdx < lines.length) {
@@ -136,7 +147,7 @@ function parseGridCommand(
             header = lines[lineIdx].trim();
         }
 
-        if (header !== 'CELL_COLORS' && header !== 'CELL_COLORS_POS' && header !== 'CELL_TEXT' && header !== 'LINES') {
+        if (header !== 'CELL_COLORS' && header !== 'CELL_COLORS_POS' && header !== 'CELL_TEXT' && header !== 'LINES' && header !== 'WALL_VERTICAL' && header !== 'WALL_HORIZONTAL') {
             break;
         }
 
@@ -196,46 +207,67 @@ function parseGridCommand(
                 }
                 lineIdx++;
             }
+        } else if (header === 'WALL_VERTICAL') {
+            lineIdx++;
+            for (let j = 0; j <= W; j++) {
+                if (lineIdx >= lines.length) break;
+                pendingRawText[mode] += lines[lineIdx] + "\n";
+                const wallLine = lines[lineIdx].trim();
+                if (wallLine.length >= H) {
+                    wallVertical[j] = wallLine.substring(0, H);
+                }
+                lineIdx++;
+            }
+        } else if (header === 'WALL_HORIZONTAL') {
+            lineIdx++;
+            for (let i = 0; i <= H; i++) {
+                if (lineIdx >= lines.length) break;
+                pendingRawText[mode] += lines[lineIdx] + "\n";
+                const wallLine = lines[lineIdx].trim();
+                if (wallLine.length >= W) {
+                    wallHorizontal[i] = wallLine.substring(0, W);
+                }
+                lineIdx++;
+            }
         } else if (header === 'LINES') {
             lineIdx++;
             if (lineIdx < lines.length) {
                 pendingRawText[mode] += lines[lineIdx] + "\n";
-                const lineN = parseInt(lines[lineIdx].trim());
+                const numLines = parseInt(lines[lineIdx].trim());
                 lineIdx++;
-                for (let k = 0; k < lineN; k++) {
+                for (let k = 0; k < numLines; k++) {
                     if (lineIdx >= lines.length) break;
                     pendingRawText[mode] += lines[lineIdx] + "\n";
                     const lLine = lines[lineIdx].trim();
                     const lParts = lLine.split(/\s+/);
                     if (lParts.length >= 2) {
                         const color = lParts[0];
-                        const count = parseInt(lParts[1]);
-                        const points: { x: number; y: number }[] = [];
-                        for (let p = 0; p < count; p++) {
+                        const numPoints = parseInt(lParts[1]);
+                        const points = [];
+                        for (let p = 0; p < numPoints; p++) {
                             if (2 + p * 2 + 1 < lParts.length) {
-                                points.push({
-                                    x: parseInt(lParts[2 + p * 2]),
-                                    y: parseInt(lParts[2 + p * 2 + 1])
-                                });
+                                const x = parseInt(lParts[2 + p * 2]);
+                                const y = parseInt(lParts[2 + p * 2 + 1]);
+                                points.push({ x, y });
                             }
                         }
-                        gridLines.push({ color, points });
+                        if (points.length > 0) {
+                            gridLines.push({ color, points });
+                        }
                     }
                     lineIdx++;
                 }
             }
-        } else {
-            break;
         }
     }
 
     const gridCommand: GridCommand = {
         type: 'GRID',
         H, W, borderColor, textColor,
-        gridColors, gridTexts, gridLines
+        gridColors, gridTexts, gridLines,
+        wallVertical, wallHorizontal
     };
 
     pendingCommands[mode].push(gridCommand);
-
     return { lineIdx };
 }
