@@ -10,7 +10,9 @@ export function renderGrid(
     textColor: string,
     gridColors: string[][],
     gridTexts: string[][],
-    gridLines: GridLine[]
+    gridLines: GridLine[],
+    wallVertical: string[] = [],
+    wallHorizontal: string[] = []
 ): void {
     const canvasSize = 800;
     const cellWidth = canvasSize / W;
@@ -38,9 +40,7 @@ export function renderGrid(
             }
 
             rect.setAttribute("fill", fill);
-            rect.setAttribute("stroke", borderColor);
-            rect.setAttribute("stroke-width", "1");
-            rect.setAttribute("vector-effect", "non-scaling-stroke");
+            rect.setAttribute("stroke", "none");
 
             // Add tooltip
             const title = document.createElementNS(SVG_NS, "title");
@@ -87,6 +87,83 @@ export function renderGrid(
                 textElement.setAttribute("pointer-events", "none");
                 textElement.textContent = textContent;
                 svg.appendChild(textElement);
+            }
+        }
+    }
+
+    // Render walls
+    const wallWidth = 2;
+
+    // Render vertical walls
+    if (wallVertical.length > 0) {
+        for (let j = 0; j <= W; j++) {
+            if (j < wallVertical.length) {
+                const wallString = wallVertical[j];
+                for (let i = 0; i < H && i < wallString.length; i++) {
+                    if (wallString[i] === 'Y') {
+                        const line = document.createElementNS(SVG_NS, "line");
+                        line.setAttribute("x1", String(j * cellWidth));
+                        line.setAttribute("y1", String(i * cellHeight));
+                        line.setAttribute("x2", String(j * cellWidth));
+                        line.setAttribute("y2", String((i + 1) * cellHeight));
+                        line.setAttribute("stroke", borderColor);
+                        line.setAttribute("stroke-width", String(wallWidth));
+                        line.setAttribute("pointer-events", "none");
+                        svg.appendChild(line);
+                    }
+                }
+            }
+        }
+    } else {
+        // Default: all vertical walls exist
+        for (let j = 0; j <= W; j++) {
+            for (let i = 0; i < H; i++) {
+                const line = document.createElementNS(SVG_NS, "line");
+                line.setAttribute("x1", String(j * cellWidth));
+                line.setAttribute("y1", String(i * cellHeight));
+                line.setAttribute("x2", String(j * cellWidth));
+                line.setAttribute("y2", String((i + 1) * cellHeight));
+                line.setAttribute("stroke", borderColor);
+                line.setAttribute("stroke-width", String(wallWidth));
+                line.setAttribute("pointer-events", "none");
+                svg.appendChild(line);
+            }
+        }
+    }
+
+    // Render horizontal walls
+    if (wallHorizontal.length > 0) {
+        for (let i = 0; i <= H; i++) {
+            if (i < wallHorizontal.length) {
+                const wallString = wallHorizontal[i];
+                for (let j = 0; j < W && j < wallString.length; j++) {
+                    if (wallString[j] === 'Y') {
+                        const line = document.createElementNS(SVG_NS, "line");
+                        line.setAttribute("x1", String(j * cellWidth));
+                        line.setAttribute("y1", String(i * cellHeight));
+                        line.setAttribute("x2", String((j + 1) * cellWidth));
+                        line.setAttribute("y2", String(i * cellHeight));
+                        line.setAttribute("stroke", borderColor);
+                        line.setAttribute("stroke-width", String(wallWidth));
+                        line.setAttribute("pointer-events", "none");
+                        svg.appendChild(line);
+                    }
+                }
+            }
+        }
+    } else {
+        // Default: all horizontal walls exist
+        for (let i = 0; i <= H; i++) {
+            for (let j = 0; j < W; j++) {
+                const line = document.createElementNS(SVG_NS, "line");
+                line.setAttribute("x1", String(j * cellWidth));
+                line.setAttribute("y1", String(i * cellHeight));
+                line.setAttribute("x2", String((j + 1) * cellWidth));
+                line.setAttribute("y2", String(i * cellHeight));
+                line.setAttribute("stroke", borderColor);
+                line.setAttribute("stroke-width", String(wallWidth));
+                line.setAttribute("pointer-events", "none");
+                svg.appendChild(line);
             }
         }
     }
@@ -144,6 +221,8 @@ export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand):
         cmd.textColor,
         cmd.gridColors,
         cmd.gridTexts,
-        cmd.gridLines
+        cmd.gridLines,
+        cmd.wallVertical,
+        cmd.wallHorizontal
     );
 }
