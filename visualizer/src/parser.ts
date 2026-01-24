@@ -1,4 +1,4 @@
-import { ParsedModes, Frame, GridCommand, Command, GridLine } from './types';
+import { ParsedModes, Frame, GridCommand, Command, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup } from './types';
 
 interface PendingCommands {
     [mode: string]: Command[];
@@ -62,6 +62,26 @@ export function parseStderr(stderrText: string): ParsedModes {
 
         if (cmd === 'COMMIT') {
             if (pendingCommands[mode].length > 0) {
+                // Check for GRID and 2D_PLANE mutual exclusion
+                const hasGrid = pendingCommands[mode].some(c => c.type === 'GRID');
+                const has2DPlane = pendingCommands[mode].some(c => c.type === '2D_PLANE');
+
+                if (hasGrid && has2DPlane) {
+                    // Keep only the first one and add an error
+                    const gridIdx = pendingCommands[mode].findIndex(c => c.type === 'GRID');
+                    const planeIdx = pendingCommands[mode].findIndex(c => c.type === '2D_PLANE');
+
+                    if (gridIdx < planeIdx) {
+                        // Remove 2D_PLANE
+                        pendingCommands[mode] = pendingCommands[mode].filter(c => c.type !== '2D_PLANE');
+                        pendingErrors[mode].push(`Frame conflict: Both GRID and 2D_PLANE commands found in mode '${mode}'. Only GRID is displayed.`);
+                    } else {
+                        // Remove GRID
+                        pendingCommands[mode] = pendingCommands[mode].filter(c => c.type !== 'GRID');
+                        pendingErrors[mode].push(`Frame conflict: Both GRID and 2D_PLANE commands found in mode '${mode}'. Only 2D_PLANE is displayed.`);
+                    }
+                }
+
                 parsedModes[mode].push({
                     commands: pendingCommands[mode],
                     rawText: pendingRawText[mode],
@@ -88,6 +108,9 @@ export function parseStderr(stderrText: string): ParsedModes {
             lineIdx++;
         } else if (cmd === 'GRID') {
             const result = parseGridCommand(lines, lineIdx, parts, mode, pendingRawText, pendingCommands, pendingErrors);
+            lineIdx = result.lineIdx;
+        } else if (cmd === '2D_PLANE') {
+            const result = parse2DPlaneCommand(lines, lineIdx, parts, mode, pendingRawText, pendingCommands, pendingErrors);
             lineIdx = result.lineIdx;
         } else {
             // Unknown command
@@ -315,5 +338,166 @@ function parseGridCommand(
     };
 
     pendingCommands[mode].push(gridCommand);
+    return { lineIdx };
+}
+
+function parse2DPlaneCommand(
+    lines: string[],
+    lineIdx: number,
+    parts: string[],
+    mode: string,
+    pendingRawText: PendingRawText,
+    pendingCommands: PendingCommands,
+    pendingErrors: PendingErrors
+): { lineIdx: number } {
+    if (parts.length < 3) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: 2D_PLANE command requires 2 parameters (H W), got ${parts.length - 1}`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    const H = parseFloat(parts[1]);
+    const W = parseFloat(parts[2]);
+
+    if (isNaN(H) || isNaN(W)) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: 2D_PLANE H and W must be numbers, got H='${parts[1]}' W='${parts[2]}'`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    if (H <= 0 || W <= 0) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: 2D_PLANE H and W must be positive, got H=${H} W=${W}`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    const circleGroups: CircleGroup[] = [];
+    const lineGroups: LineGroup[] = [];
+    const polygonGroups: PolygonGroup[] = [];
+
+    lineIdx++;
+
+    while (lineIdx < lines.length) {
+        let header = lines[lineIdx].trim();
+        while (header === '' && lineIdx < lines.length - 1) {
+            pendingRawText[mode] += lines[lineIdx] + "\n";
+            lineIdx++;
+            header = lines[lineIdx].trim();
+        }
+
+        if (header !== 'CIRCLES' && header !== 'LINES' && header !== 'POLYGONS') {
+            break;
+        }
+
+        pendingRawText[mode] += lines[lineIdx] + "\n";
+
+        if (header === 'CIRCLES') {
+            lineIdx++;
+            if (lineIdx < lines.length) {
+                pendingRawText[mode] += lines[lineIdx] + "\n";
+                const cn = parseInt(lines[lineIdx].trim());
+                lineIdx++;
+                for (let k = 0; k < cn; k++) {
+                    if (lineIdx >= lines.length) break;
+                    pendingRawText[mode] += lines[lineIdx] + "\n";
+                    const lLine = lines[lineIdx].trim();
+                    const lParts = lLine.split(/\s+/);
+                    if (lParts.length >= 3) {
+                        const lineColor = lParts[0];
+                        const fillColor = lParts[1];
+                        const circleCount = parseInt(lParts[2]);
+                        const circles = [];
+                        for (let j = 0; j < circleCount; j++) {
+                            const baseIdx = 3 + j * 3;
+                            if (baseIdx + 2 < lParts.length) {
+                                const x = parseFloat(lParts[baseIdx]);
+                                const y = parseFloat(lParts[baseIdx + 1]);
+                                const r = parseFloat(lParts[baseIdx + 2]);
+                                if (!isNaN(x) && !isNaN(y) && !isNaN(r)) {
+                                    circles.push({ x, y, r });
+                                }
+                            }
+                        }
+                        if (circles.length > 0) {
+                            circleGroups.push({ lineColor, fillColor, circles });
+                        }
+                    }
+                    lineIdx++;
+                }
+            }
+        } else if (header === 'LINES') {
+            lineIdx++;
+            if (lineIdx < lines.length) {
+                pendingRawText[mode] += lines[lineIdx] + "\n";
+                const ln = parseInt(lines[lineIdx].trim());
+                lineIdx++;
+                for (let k = 0; k < ln; k++) {
+                    if (lineIdx >= lines.length) break;
+                    pendingRawText[mode] += lines[lineIdx] + "\n";
+                    const lLine = lines[lineIdx].trim();
+                    const lParts = lLine.split(/\s+/);
+                    if (lParts.length >= 2) {
+                        const color = lParts[0];
+                        const lineCount = parseInt(lParts[1]);
+                        const lines2D = [];
+                        for (let j = 0; j < lineCount; j++) {
+                            const baseIdx = 2 + j * 4;
+                            if (baseIdx + 3 < lParts.length) {
+                                const ax = parseFloat(lParts[baseIdx]);
+                                const ay = parseFloat(lParts[baseIdx + 1]);
+                                const bx = parseFloat(lParts[baseIdx + 2]);
+                                const by = parseFloat(lParts[baseIdx + 3]);
+                                if (!isNaN(ax) && !isNaN(ay) && !isNaN(bx) && !isNaN(by)) {
+                                    lines2D.push({ ax, ay, bx, by });
+                                }
+                            }
+                        }
+                        if (lines2D.length > 0) {
+                            lineGroups.push({ color, lines: lines2D });
+                        }
+                    }
+                    lineIdx++;
+                }
+            }
+        } else if (header === 'POLYGONS') {
+            lineIdx++;
+            if (lineIdx < lines.length) {
+                pendingRawText[mode] += lines[lineIdx] + "\n";
+                const pn = parseInt(lines[lineIdx].trim());
+                lineIdx++;
+                for (let k = 0; k < pn; k++) {
+                    if (lineIdx >= lines.length) break;
+                    pendingRawText[mode] += lines[lineIdx] + "\n";
+                    const lLine = lines[lineIdx].trim();
+                    const lParts = lLine.split(/\s+/);
+                    if (lParts.length >= 3) {
+                        const lineColor = lParts[0];
+                        const fillColor = lParts[1];
+                        const vertexCount = parseInt(lParts[2]);
+                        const points = [];
+                        for (let j = 0; j < vertexCount; j++) {
+                            const baseIdx = 3 + j * 2;
+                            if (baseIdx + 1 < lParts.length) {
+                                const x = parseFloat(lParts[baseIdx]);
+                                const y = parseFloat(lParts[baseIdx + 1]);
+                                if (!isNaN(x) && !isNaN(y)) {
+                                    points.push({ x, y });
+                                }
+                            }
+                        }
+                        if (points.length > 0) {
+                            polygonGroups.push({ lineColor, fillColor, polygon: { points } });
+                        }
+                    }
+                    lineIdx++;
+                }
+            }
+        }
+    }
+
+    const twoDPlaneCommand: TwoDPlaneCommand = {
+        type: '2D_PLANE',
+        H, W,
+        circleGroups, lineGroups, polygonGroups
+    };
+
+    pendingCommands[mode].push(twoDPlaneCommand);
     return { lineIdx };
 }

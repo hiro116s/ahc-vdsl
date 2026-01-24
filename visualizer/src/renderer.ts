@@ -1,4 +1,4 @@
-import { GridCommand, GridLine } from './types';
+import { GridCommand, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup } from './types';
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -226,5 +226,118 @@ export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand):
         cmd.gridLines,
         cmd.wallVertical,
         cmd.wallHorizontal
+    );
+}
+
+export function render2DPlane(
+    container: HTMLElement,
+    H: number,
+    W: number,
+    circleGroups: CircleGroup[],
+    lineGroups: LineGroup[],
+    polygonGroups: PolygonGroup[]
+): void {
+    const canvasSize = 800;
+    const windowWidth = canvasSize;
+    const windowHeight = canvasSize;
+
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("width", String(windowWidth));
+    svg.setAttribute("height", String(windowHeight));
+    svg.style.margin = "10px 0";
+    svg.style.display = "block";
+    svg.style.overflow = "visible";
+
+    // Add a white background
+    const background = document.createElementNS(SVG_NS, "rect");
+    background.setAttribute("x", "0");
+    background.setAttribute("y", "0");
+    background.setAttribute("width", String(windowWidth));
+    background.setAttribute("height", String(windowHeight));
+    background.setAttribute("fill", "white");
+    svg.appendChild(background);
+
+    // Render polygons first (so they appear behind circles and lines)
+    for (const polygonGroup of polygonGroups) {
+        const { lineColor, fillColor, polygon } = polygonGroup;
+        const points = polygon.points;
+
+        if (points.length < 3) continue;
+
+        let pointsStr = "";
+        for (const pt of points) {
+            const px = (pt.x / W) * windowWidth;
+            const py = (pt.y / H) * windowHeight;
+            pointsStr += `${px},${py} `;
+        }
+
+        const polygonElement = document.createElementNS(SVG_NS, "polygon");
+        polygonElement.setAttribute("points", pointsStr.trim());
+        polygonElement.setAttribute("fill", fillColor);
+        polygonElement.setAttribute("stroke", lineColor);
+        polygonElement.setAttribute("stroke-width", "2");
+        polygonElement.setAttribute("stroke-linejoin", "miter");
+        svg.appendChild(polygonElement);
+    }
+
+    // Render lines
+    for (const lineGroup of lineGroups) {
+        const { color, lines } = lineGroup;
+
+        for (const line of lines) {
+            const x1 = (line.ax / W) * windowWidth;
+            const y1 = (line.ay / H) * windowHeight;
+            const x2 = (line.bx / W) * windowWidth;
+            const y2 = (line.by / H) * windowHeight;
+
+            const lineElement = document.createElementNS(SVG_NS, "line");
+            lineElement.setAttribute("x1", String(x1));
+            lineElement.setAttribute("y1", String(y1));
+            lineElement.setAttribute("x2", String(x2));
+            lineElement.setAttribute("y2", String(y2));
+            lineElement.setAttribute("stroke", color);
+            lineElement.setAttribute("stroke-width", "2");
+            lineElement.setAttribute("stroke-linecap", "round");
+            svg.appendChild(lineElement);
+        }
+    }
+
+    // Render circles
+    for (const circleGroup of circleGroups) {
+        const { lineColor, fillColor, circles } = circleGroup;
+
+        for (const circle of circles) {
+            const cx = (circle.x / W) * windowWidth;
+            const cy = (circle.y / H) * windowHeight;
+            const r = (circle.r / W) * windowWidth; // Scale radius based on width
+
+            const circleElement = document.createElementNS(SVG_NS, "circle");
+            circleElement.setAttribute("cx", String(cx));
+            circleElement.setAttribute("cy", String(cy));
+            circleElement.setAttribute("r", String(r));
+            circleElement.setAttribute("fill", fillColor);
+            circleElement.setAttribute("stroke", lineColor);
+            circleElement.setAttribute("stroke-width", "2");
+
+            // Add tooltip
+            const title = document.createElementNS(SVG_NS, "title");
+            title.textContent = `Circle at (${circle.x.toFixed(2)}, ${circle.y.toFixed(2)}), r=${circle.r.toFixed(2)}`;
+            circleElement.appendChild(title);
+
+            svg.appendChild(circleElement);
+        }
+    }
+
+    container.appendChild(svg);
+}
+
+export function render2DPlaneFromCommand(container: HTMLElement, cmd: TwoDPlaneCommand): void {
+    render2DPlane(
+        container,
+        cmd.H,
+        cmd.W,
+        cmd.circleGroups,
+        cmd.lineGroups,
+        cmd.polygonGroups
     );
 }
