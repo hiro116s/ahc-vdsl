@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHC VDSL visualizer</title>
+</head>
+
+<body>
+    <div class="container">
+        <h1>AHC VDSL Visualizer</h1>
+
+        <div class="seed-input-group">
+            <label for="seedInput">Seed (0-999):</label>
+            <input type="number" id="seedInput" min="0" max="999" value="0" placeholder="0">
+            <button id="refreshBtn"
+                style="margin-left: 10px; padding: 8px 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 4px;">更新</button>
+            <button id="collapseAllBtn"
+                style="margin-left: 10px; padding: 8px 16px; cursor: pointer; background-color: #2196F3; color: white; border: none; border-radius: 4px;">入力欄を折り畳む</button>
+        </div>
+
+        <div class="mode-selector">
+            <h3>表示モード</h3>
+            <div class="mode-buttons">
+                <button class="mode-button active" data-mode="default">Default mode</button>
+            </div>
+        </div>
+
+        <div id="controls" style="margin-top: 10px; display: none;">
+            <input type="range" id="frameSlider" min="0" value="0" step="1" style="width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="number" id="frameNumberInput" min="1" value="1"
+                        style="width: 60px; text-align: right; padding: 2px;">
+                    <span id="totalFramesDisplay">/ 0</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="display: flex; align-items: center; font-size: 12px; color: #555;">
+                        <span style="margin-right: 5px;">Speed:</span>
+                        <input type="range" id="speedSlider" min="1" max="60" value="20" style="width: 80px;">
+                        <span id="speedValue" style="margin-left: 5px; width: 30px;">20fps</span>
+                    </div>
+                    <button id="prevBtn" style="padding: 5px 10px;">&lt;</button>
+                    <button id="playBtn" style="padding: 5px 10px;">Play</button>
+                    <button id="nextBtn" style="padding: 5px 10px;">&gt;</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="scoreDisplay"
+            style="margin-top: 10px; font-weight: bold; font-size: 24px; color: #333; min-height: 35px; border-top: 1px solid #ccc; padding-top: 10px; margin-bottom: 10px;">
+        </div>
+
+        <div id="errorSection" style="display: none;"></div>
+        <div id="visSection">
+            <!-- Visualization content will go here -->
+        </div>
+
+        <details open>
+            <summary>標準エラー出力</summary>
+            <textarea id="stderrInput" placeholder="Standard Error data..."></textarea>
+        </details>
+    </div>
+</body>
+
+</html>
