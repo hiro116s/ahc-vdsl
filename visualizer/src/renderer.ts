@@ -95,12 +95,13 @@ export function renderGrid(
     const wallWidth = 2;
 
     // Render vertical walls
+    // wallVertical[i][j] = 'Y' means vertical wall at row i, column j exists
     if (wallVertical.length > 0) {
-        for (let j = 0; j <= W; j++) {
-            if (j < wallVertical.length) {
-                const wallString = wallVertical[j];
-                for (let i = 0; i < H && i < wallString.length; i++) {
-                    if (wallString[i] === 'Y') {
+        for (let i = 0; i < H; i++) {
+            if (i < wallVertical.length) {
+                const wallString = wallVertical[i];
+                for (let j = 0; j <= W && j < wallString.length; j++) {
+                    if (wallString[j] === 'Y') {
                         const line = document.createElementNS(SVG_NS, "line");
                         line.setAttribute("x1", String(j * cellWidth));
                         line.setAttribute("y1", String(i * cellHeight));
@@ -116,8 +117,8 @@ export function renderGrid(
         }
     } else {
         // Default: all vertical walls exist
-        for (let j = 0; j <= W; j++) {
-            for (let i = 0; i < H; i++) {
+        for (let i = 0; i < H; i++) {
+            for (let j = 0; j <= W; j++) {
                 const line = document.createElementNS(SVG_NS, "line");
                 line.setAttribute("x1", String(j * cellWidth));
                 line.setAttribute("y1", String(i * cellHeight));
@@ -132,6 +133,7 @@ export function renderGrid(
     }
 
     // Render horizontal walls
+    // wallHorizontal[i][j] = 'Y' means horizontal wall at row i, column j exists
     if (wallHorizontal.length > 0) {
         for (let i = 0; i <= H; i++) {
             if (i < wallHorizontal.length) {

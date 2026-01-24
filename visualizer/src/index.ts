@@ -260,6 +260,27 @@ function renderCurrentFrame(): void {
     const frame = frames[currentFrameIndex];
     const commands = frame.commands;
 
+    // Display errors if any
+    if (frame.errors && frame.errors.length > 0) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-container';
+        const errorLabel = document.createElement('div');
+        errorLabel.className = 'error-label';
+        errorLabel.textContent = `Errors (${frame.errors.length})`;
+        errorContainer.appendChild(errorLabel);
+
+        const errorList = document.createElement('div');
+        errorList.className = 'error-list';
+        for (const error of frame.errors) {
+            const errorItem = document.createElement('div');
+            errorItem.className = 'error-item';
+            errorItem.textContent = error;
+            errorList.appendChild(errorItem);
+        }
+        errorContainer.appendChild(errorList);
+        infoDiv.appendChild(errorContainer);
+    }
+
     if (frame.showDebug) {
         const debugContainer = document.createElement('div');
         const label = document.createElement('div');

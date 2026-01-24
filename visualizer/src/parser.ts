@@ -8,12 +8,17 @@ interface PendingRawText {
     [mode: string]: string;
 }
 
+interface PendingErrors {
+    [mode: string]: string[];
+}
+
 export function parseStderr(stderrText: string): ParsedModes {
     const parsedModes: ParsedModes = {};
     parsedModes["default"] = [];
 
     const pendingCommands: PendingCommands = {};
     const pendingRawText: PendingRawText = {};
+    const pendingErrors: PendingErrors = {};
 
     if (!stderrText) {
         return parsedModes;
@@ -48,6 +53,7 @@ export function parseStderr(stderrText: string): ParsedModes {
         if (!parsedModes[mode]) parsedModes[mode] = [];
         if (!pendingCommands[mode]) pendingCommands[mode] = [];
         if (!pendingRawText[mode]) pendingRawText[mode] = "";
+        if (!pendingErrors[mode]) pendingErrors[mode] = [];
 
         pendingRawText[mode] += lines[lineIdx] + "\n";
 
@@ -59,10 +65,12 @@ export function parseStderr(stderrText: string): ParsedModes {
                 parsedModes[mode].push({
                     commands: pendingCommands[mode],
                     rawText: pendingRawText[mode],
-                    showDebug: pendingCommands[mode].some(c => c.type === 'DEBUG')
+                    showDebug: pendingCommands[mode].some(c => c.type === 'DEBUG'),
+                    errors: pendingErrors[mode]
                 });
                 pendingCommands[mode] = [];
                 pendingRawText[mode] = "";
+                pendingErrors[mode] = [];
             }
             lineIdx++;
         } else if (cmd === 'DEBUG') {
@@ -79,9 +87,13 @@ export function parseStderr(stderrText: string): ParsedModes {
             pendingCommands[mode].push({ type: 'SCORE', score });
             lineIdx++;
         } else if (cmd === 'GRID') {
-            const result = parseGridCommand(lines, lineIdx, parts, mode, pendingRawText, pendingCommands);
+            const result = parseGridCommand(lines, lineIdx, parts, mode, pendingRawText, pendingCommands, pendingErrors);
             lineIdx = result.lineIdx;
         } else {
+            // Unknown command
+            if (cmd && cmd.length > 0) {
+                pendingErrors[mode].push(`Line ${lineIdx + 1}: Unknown command '${cmd}'`);
+            }
             lineIdx++;
         }
     }
@@ -92,7 +104,8 @@ export function parseStderr(stderrText: string): ParsedModes {
             parsedModes[m].push({
                 commands: pendingCommands[m],
                 rawText: pendingRawText[m] || "",
-                showDebug: pendingCommands[m].some(c => c.type === 'DEBUG')
+                showDebug: pendingCommands[m].some(c => c.type === 'DEBUG'),
+                errors: pendingErrors[m] || []
             });
         }
     }
@@ -106,9 +119,11 @@ function parseGridCommand(
     parts: string[],
     mode: string,
     pendingRawText: PendingRawText,
-    pendingCommands: PendingCommands
+    pendingCommands: PendingCommands,
+    pendingErrors: PendingErrors
 ): { lineIdx: number } {
     if (parts.length < 6) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: GRID command requires 5 parameters (H W borderColor textColor defaultCellColor), got ${parts.length - 1}`);
         return { lineIdx: lineIdx + 1 };
     }
 
@@ -117,6 +132,16 @@ function parseGridCommand(
     const borderColor = parts[3];
     const textColor = parts[4];
     const defaultCellColor = parts[5];
+
+    if (isNaN(H) || isNaN(W)) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: GRID H and W must be integers, got H='${parts[1]}' W='${parts[2]}'`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    if (H <= 0 || W <= 0) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: GRID H and W must be positive, got H=${H} W=${W}`);
+        return { lineIdx: lineIdx + 1 };
+    }
 
     const gridColors: string[][] = [];
     for (let r = 0; r < H; r++) gridColors.push(new Array(W).fill(defaultCellColor));
@@ -127,11 +152,15 @@ function parseGridCommand(
     const gridLines: GridLine[] = [];
 
     // Initialize walls with default values (all walls exist)
+    // wallVertical: H rows, each row has W+1 characters (for W+1 vertical lines)
+    // wv[i][j] = 'Y' means vertical wall at row i, column j exists
     const wallVertical: string[] = [];
-    for (let j = 0; j <= W; j++) {
-        wallVertical.push('Y'.repeat(H));
+    for (let i = 0; i < H; i++) {
+        wallVertical.push('Y'.repeat(W + 1));
     }
 
+    // wallHorizontal: H+1 rows, each row has W characters (for H+1 horizontal lines)
+    // wh[i][j] = 'Y' means horizontal wall at row i, column j exists
     const wallHorizontal: string[] = [];
     for (let i = 0; i <= H; i++) {
         wallHorizontal.push('Y'.repeat(W));
@@ -208,22 +237,39 @@ function parseGridCommand(
                 lineIdx++;
             }
         } else if (header === 'WALL_VERTICAL') {
+            // H rows, each row has W+1 characters
+            const startLineIdx = lineIdx;
             lineIdx++;
-            for (let j = 0; j <= W; j++) {
-                if (lineIdx >= lines.length) break;
+            for (let i = 0; i < H; i++) {
+                if (lineIdx >= lines.length) {
+                    pendingErrors[mode].push(`Line ${startLineIdx + 1}: WALL_VERTICAL expects ${H} rows, but only ${i} rows found`);
+                    break;
+                }
                 pendingRawText[mode] += lines[lineIdx] + "\n";
                 const wallLine = lines[lineIdx].trim();
-                if (wallLine.length >= H) {
-                    wallVertical[j] = wallLine.substring(0, H);
+                if (wallLine.length < W + 1) {
+                    pendingErrors[mode].push(`Line ${lineIdx + 1}: WALL_VERTICAL row ${i} expects ${W + 1} characters, got ${wallLine.length}`);
+                }
+                if (wallLine.length >= W + 1) {
+                    wallVertical[i] = wallLine.substring(0, W + 1);
+                } else {
+                    wallVertical[i] = wallLine;
                 }
                 lineIdx++;
             }
         } else if (header === 'WALL_HORIZONTAL') {
+            const startLineIdx = lineIdx;
             lineIdx++;
             for (let i = 0; i <= H; i++) {
-                if (lineIdx >= lines.length) break;
+                if (lineIdx >= lines.length) {
+                    pendingErrors[mode].push(`Line ${startLineIdx + 1}: WALL_HORIZONTAL expects ${H + 1} rows, but only ${i} rows found`);
+                    break;
+                }
                 pendingRawText[mode] += lines[lineIdx] + "\n";
                 const wallLine = lines[lineIdx].trim();
+                if (wallLine.length < W) {
+                    pendingErrors[mode].push(`Line ${lineIdx + 1}: WALL_HORIZONTAL row ${i} expects ${W} characters, got ${wallLine.length}`);
+                }
                 if (wallLine.length >= W) {
                     wallHorizontal[i] = wallLine.substring(0, W);
                 }

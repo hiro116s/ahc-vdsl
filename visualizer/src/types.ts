@@ -43,6 +43,7 @@ export interface Frame {
     commands: Command[];
     rawText: string;
     showDebug: boolean;
+    errors: string[];
 }
 
 export interface ParsedModes {
