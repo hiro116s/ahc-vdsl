@@ -37,7 +37,50 @@ export interface DebugCommand {
     type: 'DEBUG';
 }
 
-export type Command = GridCommand | TextAreaCommand | ScoreCommand | DebugCommand;
+export interface Circle {
+    x: number;
+    y: number;
+    r: number;
+}
+
+export interface Line2D {
+    ax: number;
+    ay: number;
+    bx: number;
+    by: number;
+}
+
+export interface Polygon {
+    points: Point[];
+}
+
+export interface CircleGroup {
+    lineColor: string;
+    fillColor: string;
+    circles: Circle[];
+}
+
+export interface LineGroup {
+    color: string;
+    lines: Line2D[];
+}
+
+export interface PolygonGroup {
+    lineColor: string;
+    fillColor: string;
+    polygon: Polygon;
+}
+
+export interface TwoDPlaneCommand {
+    type: '2D_PLANE';
+    H: number;
+    W: number;
+    circleGroups: CircleGroup[];
+    lineGroups: LineGroup[];
+    polygonGroups: PolygonGroup[];
+}
+
+export type Command = GridCommand | TextAreaCommand | ScoreCommand | DebugCommand | TwoDPlaneCommand;
 
 export interface Frame {
     commands: Command[];

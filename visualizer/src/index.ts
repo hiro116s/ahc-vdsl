@@ -1,7 +1,7 @@
 import './styles.css';
-import { ParsedModes, Frame, GridCommand } from './types';
+import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand } from './types';
 import { parseStderr } from './parser';
-import { renderGridFromCommand } from './renderer';
+import { renderGridFromCommand, render2DPlaneFromCommand } from './renderer';
 
 // DOM Elements
 const seedInput = document.getElementById('seedInput') as HTMLInputElement;
@@ -298,6 +298,8 @@ function renderCurrentFrame(): void {
     for (const cmd of commands) {
         if (cmd.type === 'GRID') {
             renderGridFromCommand(canvasDiv, cmd as GridCommand);
+        } else if (cmd.type === '2D_PLANE') {
+            render2DPlaneFromCommand(canvasDiv, cmd as TwoDPlaneCommand);
         } else if (cmd.type === 'TEXTAREA') {
             const ta = document.createElement('textarea');
             ta.className = 'info-textarea';
