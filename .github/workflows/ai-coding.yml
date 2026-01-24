@@ -1,0 +1,225 @@
+name: AI Coding Assistant
+
+on:
+  issues:
+    types: [labeled]
+
+env:
+  # Anthropic Model Configuration
+  # Available models: claude-sonnet-4-20250514, claude-opus-4-20250514, claude-3-5-sonnet-20241022, etc.
+  ANTHROPIC_MODEL: claude-sonnet-4-20250514
+  # Maximum tokens for the response
+  ANTHROPIC_MAX_TOKENS: 8192
+
+jobs:
+  ai-coding:
+    runs-on: ubuntu-latest
+    if: github.event.label.name == 'ai coding'
+    
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create branch name from issue
+        id: branch
+        run: |
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          # Sanitize issue title for branch name
+          BRANCH_NAME="ai-coding/issue-${ISSUE_NUMBER}"
+          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "Branch name: ${BRANCH_NAME}"
+
+      - name: Create and checkout branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b ${{ steps.branch.outputs.branch_name }}
+
+      - name: Call Claude API and apply changes
+        id: claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # Get issue details
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          ISSUE_BODY="${{ github.event.issue.body }}"
+          
+          # Prepare the prompt
+          PROMPT="You are an expert software engineer. Based on the following GitHub issue, provide code changes.
+
+          Issue Title: ${ISSUE_TITLE}
+          
+          Issue Description:
+          ${ISSUE_BODY}
+          
+          Repository structure:
+          $(find . -type f -name "*.ts" -o -name "*.js" -o -name "*.json" -o -name "*.html" -o -name "*.css" -o -name "*.md" | head -50 | xargs ls -la 2>/dev/null || echo 'Unable to list files')
+          
+          Please analyze the issue and provide:
+          1. A summary of what changes are needed
+          2. The specific file changes in the following format:
+          
+          For each file that needs to be created or modified, use this exact format:
+          
+          ===FILE_START===
+          PATH: <file_path>
+          ACTION: <create|modify>
+          ===CONTENT_START===
+          <full file content here>
+          ===CONTENT_END===
+          
+          Make sure to provide complete, working code."
+          
+          # Escape the prompt for JSON
+          ESCAPED_PROMPT=$(echo "$PROMPT" | jq -Rs .)
+          
+          # Call Claude API
+          RESPONSE=$(curl -s -X POST https://api.anthropic.com/v1/messages \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: ${ANTHROPIC_API_KEY}" \
+            -H "anthropic-version: 2023-06-01" \
+            -d "{
+              \"model\": \"${ANTHROPIC_MODEL}\",
+              \"max_tokens\": ${ANTHROPIC_MAX_TOKENS},
+              \"messages\": [
+                {
+                  \"role\": \"user\",
+                  \"content\": ${ESCAPED_PROMPT}
+                }
+              ]
+            }")
+          
+          # Check for API errors
+          if echo "$RESPONSE" | jq -e '.error' > /dev/null 2>&1; then
+            echo "API Error: $(echo "$RESPONSE" | jq -r '.error.message')"
+            exit 1
+          fi
+          
+          # Extract the text content
+          CONTENT=$(echo "$RESPONSE" | jq -r '.content[0].text')
+          
+          # Save response for debugging
+          echo "$CONTENT" > /tmp/claude_response.txt
+          
+          # Parse and apply file changes
+          echo "$CONTENT" | awk '
+          BEGIN { in_file=0; in_content=0; path=""; action=""; content="" }
+          /===FILE_START===/ { in_file=1; next }
+          /^PATH:/ && in_file { gsub(/^PATH: */, ""); path=$0; next }
+          /^ACTION:/ && in_file { gsub(/^ACTION: */, ""); action=$0; next }
+          /===CONTENT_START===/ { in_content=1; content=""; next }
+          /===CONTENT_END===/ { 
+            in_content=0; 
+            in_file=0;
+            if (path != "" && content != "") {
+              # Create directory if needed
+              dir = path
+              gsub(/\/[^\/]*$/, "", dir)
+              if (dir != path) {
+                system("mkdir -p \"" dir "\"")
+              }
+              # Write content to file
+              print content > path
+              print "Written: " path
+            }
+            path=""; action=""; content=""
+            next
+          }
+          in_content { content = content (content=="" ? "" : "\n") $0 }
+          '
+          
+          # Save summary for PR description
+          SUMMARY=$(echo "$CONTENT" | sed -n '1,/===FILE_START===/p' | head -n -1)
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git add -A
+          git commit -m "AI: Implement changes for issue #${{ github.event.issue.number }}
+
+          ${{ github.event.issue.title }}
+          
+          Closes #${{ github.event.issue.number }}"
+
+      - name: Push branch
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git push origin ${{ steps.branch.outputs.branch_name }}
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_BODY="## AI-Generated Changes for Issue #${{ github.event.issue.number }}
+          
+          ### Original Issue
+          **${{ github.event.issue.title }}**
+          
+          ${{ github.event.issue.body }}
+          
+          ---
+          
+          ### AI Analysis & Changes
+          ${{ steps.claude.outputs.summary }}
+          
+          ---
+          
+          ⚠️ **This PR was automatically generated by Claude (${{ env.ANTHROPIC_MODEL }}). Please review carefully before merging.**
+          
+          Closes #${{ github.event.issue.number }}"
+          
+          gh pr create \
+            --title "AI: ${{ github.event.issue.title }}" \
+            --body "$PR_BODY" \
+            --base main \
+            --head ${{ steps.branch.outputs.branch_name }}
+
+      - name: Comment on issue (success)
+        if: steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --body "🤖 AI Coding Assistant has created a pull request for this issue.
+            
+            Branch: \`${{ steps.branch.outputs.branch_name }}\`
+            Model: \`${{ env.ANTHROPIC_MODEL }}\`
+            
+            Please review the changes and provide feedback!"
+
+      - name: Comment on issue (no changes)
+        if: steps.changes.outputs.has_changes == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --body "🤖 AI Coding Assistant analyzed this issue but could not determine specific code changes to make.
+            
+            Model: \`${{ env.ANTHROPIC_MODEL }}\`
+            
+            Please provide more details in the issue description, or manually implement the changes."
