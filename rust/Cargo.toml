@@ -3,5 +3,9 @@ name = "rust"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = ["vis"]
+vis = []
+
 [dependencies]
 rustc-hash = "=1.1.0"

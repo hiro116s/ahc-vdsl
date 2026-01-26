@@ -1,5 +1,8 @@
+// Tests for vis feature enabled
+#[cfg(feature = "vis")]
 use super::ahc_vdsl::ahc_vdsl::*;
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_new() {
     let grid = VisGrid::new(3, 4);
@@ -11,6 +14,7 @@ fn test_visgrid_new() {
     assert!(output.contains("LINES"));
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_update_cell_color() {
     let mut grid = VisGrid::new(3, 3);
@@ -20,6 +24,7 @@ fn test_visgrid_update_cell_color() {
     assert!(output.contains("#FF0000"));
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_add_line() {
     let mut grid = VisGrid::new(5, 5);
@@ -31,6 +36,7 @@ fn test_visgrid_add_line() {
     assert!(output.contains("#0000FF")); // BLUE color
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_from_cells() {
     let cells = vec![vec![1, 2, 3], vec![4, 5, 6]];
@@ -42,6 +48,7 @@ fn test_visgrid_from_cells() {
     assert!(output.contains("4 5 6"));
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_color_display() {
     assert_eq!(WHITE.to_string(), "#FFFFFF");
@@ -54,6 +61,7 @@ fn test_color_display() {
     assert_eq!(MAGENTA.to_string(), "#FF00FF");
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_multiple_operations() {
     let mut grid = VisGrid::new(4, 4);
@@ -82,6 +90,7 @@ fn test_visgrid_multiple_operations() {
 }
 
 // Add tests for walls
+#[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_walls() {
     let mut grid = VisGrid::new(2, 2);
@@ -93,6 +102,7 @@ fn test_visgrid_walls() {
     eprintln!("{output}");
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_vis2dplane_new() {
     let plane = Vis2DPlane::new(100.0, 100.0);
@@ -100,6 +110,7 @@ fn test_vis2dplane_new() {
     assert!(output.contains("$v(test) 2D_PLANE 100 100"));
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_vis2dplane_add_circle() {
     let mut plane = Vis2DPlane::new(100.0, 100.0);
@@ -111,6 +122,7 @@ fn test_vis2dplane_add_circle() {
     assert!(output.contains("50 50 10"));
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_vis2dplane_add_line() {
     let mut plane = Vis2DPlane::new(100.0, 100.0);
@@ -121,6 +133,7 @@ fn test_vis2dplane_add_line() {
     assert!(output.contains("0 0 100 100"));
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_vis2dplane_add_polygon() {
     let mut plane = Vis2DPlane::new(100.0, 100.0);
@@ -136,6 +149,7 @@ fn test_vis2dplane_add_polygon() {
     assert!(output.contains("4")); // 4 vertices
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visframe_with_grid() {
     let grid = VisGrid::new(3, 3);
@@ -149,6 +163,7 @@ fn test_visframe_with_grid() {
     assert!(output.contains("$v(test) COMMIT"));
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visframe_with_2dplane() {
     let mut plane = Vis2DPlane::new(100.0, 100.0);
@@ -162,6 +177,7 @@ fn test_visframe_with_2dplane() {
     assert!(output.contains("$v(test) COMMIT"));
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visroot_add_frame() {
     let mut root = VisRoot::new();
@@ -189,6 +205,7 @@ fn test_visroot_add_frame() {
     assert!(output1.contains("SCORE 200"));
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visroot_multiple_modes() {
     let mut root = VisRoot::new();
@@ -212,6 +229,7 @@ fn test_visroot_multiple_modes() {
     assert_eq!(root.get_frames("debug").unwrap().len(), 1);
 }
 
+#[cfg(feature = "vis")]
 #[test]
 fn test_visroot_add_frames() {
     let mut root = VisRoot::new();
@@ -227,4 +245,142 @@ fn test_visroot_add_frames() {
     assert!(frames[0].to_vis_string("main").contains("SCORE 100"));
     assert!(frames[1].to_vis_string("main").contains("SCORE 200"));
     assert!(frames[2].to_vis_string("main").contains("SCORE 300"));
+}
+
+// ============================================================
+// Tests for vis feature DISABLED (zero-cost mode)
+// ============================================================
+#[cfg(not(feature = "vis"))]
+mod vis_disabled_tests {
+    use crate::ahc_vdsl::ahc_vdsl::*;
+
+    #[test]
+    fn test_visgrid_is_zero_sized() {
+        // VisGrid should be zero-sized when vis is disabled
+        assert_eq!(std::mem::size_of::<VisGrid>(), 0);
+    }
+
+    #[test]
+    fn test_visframe_is_zero_sized() {
+        // VisFrame should be zero-sized when vis is disabled
+        assert_eq!(std::mem::size_of::<VisFrame>(), 0);
+    }
+
+    #[test]
+    fn test_vis2dplane_is_zero_sized() {
+        // Vis2DPlane should be zero-sized when vis is disabled
+        assert_eq!(std::mem::size_of::<Vis2DPlane>(), 0);
+    }
+
+    #[test]
+    fn test_visroot_is_zero_sized() {
+        // VisRoot should be zero-sized when vis is disabled
+        assert_eq!(std::mem::size_of::<VisRoot>(), 0);
+    }
+
+    #[test]
+    fn test_color_is_zero_sized() {
+        // Color should be zero-sized when vis is disabled
+        assert_eq!(std::mem::size_of::<Color>(), 0);
+    }
+
+    #[test]
+    fn test_visgrid_operations_compile() {
+        // Verify that all operations compile and run without errors
+        let mut grid = VisGrid::new(10, 10);
+        grid.update_cell_color((5, 5), RED);
+        grid.add_line(vec![(0, 0), (1, 1), (2, 2)], BLUE);
+        grid.remove_wall_vertical((1, 0));
+        grid.remove_wall_horizontal((0, 1));
+        grid.add_wall_vertical((2, 0));
+        grid.add_wall_horizontal((0, 2));
+
+        let output = grid.to_vis_string("test");
+        assert!(output.is_empty()); // Output should be empty when vis is disabled
+    }
+
+    #[test]
+    fn test_visgrid_from_cells_works() {
+        let cells = vec![vec![1, 2, 3], vec![4, 5, 6]];
+        let grid = VisGrid::from_cells(&cells);
+        let output = grid.to_vis_string("test");
+        assert!(output.is_empty());
+    }
+
+    #[test]
+    fn test_vis2dplane_operations_compile() {
+        let mut plane = Vis2DPlane::new(100.0, 100.0);
+        plane.add_circle(RED, BLUE, 50.0, 50.0, 10.0);
+        plane.add_line(GREEN, 0.0, 0.0, 100.0, 100.0);
+        plane.add_polygon(
+            RED,
+            YELLOW,
+            vec![(10.0, 10.0), (90.0, 10.0), (90.0, 90.0), (10.0, 90.0)],
+        );
+
+        let output = plane.to_vis_string("test");
+        assert!(output.is_empty());
+    }
+
+    #[test]
+    fn test_visframe_operations_compile() {
+        let grid = VisGrid::new(3, 3);
+        let mut frame = VisFrame::new_grid(grid, "12345");
+        frame.add_textarea("Debug info".to_string());
+        frame.enable_debug();
+        frame.disable_debug();
+        frame.set_score("999".to_string());
+
+        let output = frame.to_vis_string("test");
+        assert!(output.is_empty());
+    }
+
+    #[test]
+    fn test_visframe_with_2dplane_compiles() {
+        let plane = Vis2DPlane::new(100.0, 100.0);
+        let mut frame = VisFrame::new_2d_plane(plane, "score");
+        frame.enable_debug();
+
+        let output = frame.to_vis_string("test");
+        assert!(output.is_empty());
+    }
+
+    #[test]
+    fn test_visroot_operations_compile() {
+        let mut root = VisRoot::new();
+
+        let grid = VisGrid::new(2, 2);
+        let frame = VisFrame::new_grid(grid, "100");
+        root.add_frame("main", frame);
+
+        let frame2 = VisFrame::new_grid(VisGrid::new(1, 1), "200");
+        let frame3 = VisFrame::new_grid(VisGrid::new(1, 1), "300");
+        root.add_frames("main", vec![frame2, frame3]);
+
+        // get_frames returns None when vis is disabled
+        assert!(root.get_frames("main").is_none());
+
+        // output_all should do nothing
+        root.output_all();
+    }
+
+    #[test]
+    fn test_color_constants_exist() {
+        // Verify that color constants are accessible
+        let _ = WHITE;
+        let _ = BLACK;
+        let _ = GRAY;
+        let _ = RED;
+        let _ = BLUE;
+        let _ = GREEN;
+        let _ = YELLOW;
+        let _ = CYAN;
+        let _ = MAGENTA;
+    }
+
+    #[test]
+    fn test_color_display_is_empty() {
+        assert_eq!(RED.to_string(), "");
+        assert_eq!(Color::new(128, 128, 128).to_string(), "");
+    }
 }

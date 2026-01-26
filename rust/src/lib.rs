@@ -1,4 +1,4 @@
 pub mod ahc_vdsl;
 
 #[cfg(test)]
-mod tests;
+mod ahc_vdsl_tests;
