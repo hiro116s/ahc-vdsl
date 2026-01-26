@@ -247,6 +247,77 @@ fn test_visroot_add_frames() {
     assert!(frames[2].to_vis_string("main").contains("SCORE 300"));
 }
 
+#[cfg(feature = "vis")]
+#[test]
+fn test_visroot_file_output() {
+    use std::fs;
+
+    // Create a temporary file path
+    let temp_dir = std::env::temp_dir();
+    let test_file = temp_dir.join("vis_test_output.txt");
+
+    // Clean up if file exists
+    let _ = fs::remove_file(&test_file);
+
+    // Create VisRoot with file output
+    let mut root = VisRoot::new_with_file(&test_file);
+
+    // Add some frames
+    let mut grid = VisGrid::new(2, 2);
+    grid.update_cell_color((0, 0), RED);
+    let frame = VisFrame::new_grid(grid, "12345");
+    root.add_frame("test", frame);
+
+    // Output to file
+    root.output_all();
+
+    // Read the file and verify contents
+    let contents = fs::read_to_string(&test_file).expect("Failed to read output file");
+
+    assert!(contents.contains("$v(test) GRID 2 2"));
+    assert!(contents.contains("SCORE 12345"));
+    assert!(contents.contains("#FF0000")); // RED color
+    assert!(contents.contains("$v(test) COMMIT"));
+
+    // Clean up
+    let _ = fs::remove_file(&test_file);
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_visroot_file_output_multiple_modes() {
+    use std::fs;
+
+    let temp_dir = std::env::temp_dir();
+    let test_file = temp_dir.join("vis_test_multi_mode.txt");
+
+    let _ = fs::remove_file(&test_file);
+
+    let mut root = VisRoot::new_with_file(&test_file);
+
+    // Add frames to different modes
+    let grid1 = VisGrid::new(1, 1);
+    let frame1 = VisFrame::new_grid(grid1, "100");
+    root.add_frame("main", frame1);
+
+    let mut plane = Vis2DPlane::new(50.0, 50.0);
+    plane.add_circle(RED, BLUE, 25.0, 25.0, 5.0);
+    let frame2 = VisFrame::new_2d_plane(plane, "200");
+    root.add_frame("debug", frame2);
+
+    root.output_all();
+
+    let contents = fs::read_to_string(&test_file).expect("Failed to read output file");
+
+    // Verify both modes are in the output
+    assert!(contents.contains("$v(main) GRID 1 1"));
+    assert!(contents.contains("SCORE 100"));
+    assert!(contents.contains("$v(debug) 2D_PLANE 50 50"));
+    assert!(contents.contains("SCORE 200"));
+
+    let _ = fs::remove_file(&test_file);
+}
+
 // ============================================================
 // Tests for vis feature DISABLED (zero-cost mode)
 // ============================================================

@@ -2,11 +2,20 @@ pub mod ahc_vdsl {
     #[cfg(feature = "vis")]
     mod vis_enabled {
         use std::fmt::{Display, Write};
+        use std::fs::File;
+        use std::io::Write as IoWrite;
+        use std::path::PathBuf;
 
         use rustc_hash::{FxHashMap, FxHashSet};
 
+        pub enum OutputDestination {
+            Stderr,
+            File(PathBuf),
+        }
+
         pub struct VisRoot {
             fames_by_mode: FxHashMap<String, Vec<VisFrame>>,
+            output_destination: OutputDestination,
         }
 
         impl Default for VisRoot {
@@ -19,6 +28,14 @@ pub mod ahc_vdsl {
             pub fn new() -> Self {
                 Self {
                     fames_by_mode: FxHashMap::default(),
+                    output_destination: OutputDestination::Stderr,
+                }
+            }
+
+            pub fn new_with_file<P: Into<PathBuf>>(path: P) -> Self {
+                Self {
+                    fames_by_mode: FxHashMap::default(),
+                    output_destination: OutputDestination::File(path.into()),
                 }
             }
 
@@ -37,9 +54,21 @@ pub mod ahc_vdsl {
             }
 
             pub fn output_all(&self) {
+                let mut output = String::new();
                 for (mode, frames) in &self.fames_by_mode {
                     for frame in frames.iter() {
-                        eprint!("{}", frame.to_vis_string(mode));
+                        output.push_str(&frame.to_vis_string(mode));
+                    }
+                }
+
+                match &self.output_destination {
+                    OutputDestination::Stderr => {
+                        eprint!("{output}");
+                    }
+                    OutputDestination::File(path) => {
+                        if let Ok(mut file) = File::create(path) {
+                            let _ = file.write_all(output.as_bytes());
+                        }
                     }
                 }
             }
@@ -517,6 +546,13 @@ pub mod ahc_vdsl {
     #[cfg(not(feature = "vis"))]
     mod vis_disabled {
         use std::fmt::Display;
+        use std::path::PathBuf;
+
+        // Dummy type for API compatibility
+        pub enum OutputDestination {
+            Stderr,
+            File(PathBuf),
+        }
 
         // VisRoot - Zero-Sized Type
         pub struct VisRoot;
@@ -531,6 +567,11 @@ pub mod ahc_vdsl {
         impl VisRoot {
             #[inline(always)]
             pub fn new() -> Self {
+                Self
+            }
+
+            #[inline(always)]
+            pub fn new_with_file<P: Into<PathBuf>>(_path: P) -> Self {
                 Self
             }
 
