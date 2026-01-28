@@ -155,8 +155,8 @@ public:
         ss << lines.size() << "\n";
         for (const auto& [line, color] : lines) {
             ss << color.to_string() << " " << line.size();
-            for (const auto& [y, x] : line) {
-                ss << " " << y << " " << x;
+            for (const auto& [x, y] : line) {
+                ss << " " << x << " " << y;
             }
             ss << "\n";
         }

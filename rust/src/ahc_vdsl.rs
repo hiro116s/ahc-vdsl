@@ -449,7 +449,7 @@ pub mod ahc_vdsl {
                 for (line, color) in &self.lines {
                     write!(&mut s, "{} {}", color, line.len()).unwrap();
                     for p in line {
-                        write!(&mut s, " {} {}", p.1, p.0).unwrap();
+                        write!(&mut s, " {} {}", p.0, p.1).unwrap();
                     }
                     writeln!(&mut s).unwrap();
                 }
