@@ -1,7 +1,7 @@
 import './styles.css';
-import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand, CanvasCommand } from './types';
+import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand, CanvasCommand, LineGraphCommand } from './types';
 import { parseStderr } from './parser';
-import { createCanvasSvg, renderGridFromCommand, render2DPlaneFromCommand } from './renderer';
+import { createCanvasSvg, renderGridFromCommand, render2DPlaneFromCommand, renderLineGraphFromCommand } from './renderer';
 
 // DOM Elements
 const seedInput = document.getElementById('seedInput') as HTMLInputElement;
@@ -308,6 +308,8 @@ function renderCurrentFrame(): void {
             renderGridFromCommand(svg, cmd as GridCommand, canvasW, canvasH);
         } else if (cmd.type === '2D_PLANE') {
             render2DPlaneFromCommand(svg, cmd as TwoDPlaneCommand, canvasW, canvasH);
+        } else if (cmd.type === 'LINE_GRAPH') {
+            renderLineGraphFromCommand(svg, cmd as LineGraphCommand, canvasW, canvasH);
         } else if (cmd.type === 'CANVAS') {
             // Canvas command is handled above for sizing, no visual rendering needed
         } else if (cmd.type === 'TEXTAREA') {

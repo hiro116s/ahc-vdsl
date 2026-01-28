@@ -1,4 +1,4 @@
-import { ParsedModes, Frame, GridCommand, Command, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, CanvasCommand, ItemBounds } from './types';
+import { ParsedModes, Frame, GridCommand, Command, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, CanvasCommand, ItemBounds, LineGraphCommand, Point } from './types';
 
 interface PendingCommands {
     [mode: string]: Command[];
@@ -63,7 +63,7 @@ export function parseStderr(stderrText: string): ParsedModes {
         if (cmd === 'COMMIT') {
             if (pendingCommands[mode].length > 0) {
                 // Check for overlapping items
-                const items = pendingCommands[mode].filter(c => c.type === 'GRID' || c.type === '2D_PLANE');
+                const items = pendingCommands[mode].filter(c => c.type === 'GRID' || c.type === '2D_PLANE' || c.type === 'LINE_GRAPH');
                 if (items.length > 1) {
                     // Get canvas size
                     const canvasCmd = pendingCommands[mode].find(c => c.type === 'CANVAS') as CanvasCommand | undefined;
@@ -73,8 +73,8 @@ export function parseStderr(stderrText: string): ParsedModes {
                     // Check for overlaps
                     for (let i = 0; i < items.length; i++) {
                         for (let j = i + 1; j < items.length; j++) {
-                            const item1 = items[i] as GridCommand | TwoDPlaneCommand;
-                            const item2 = items[j] as GridCommand | TwoDPlaneCommand;
+                            const item1 = items[i] as GridCommand | TwoDPlaneCommand | LineGraphCommand;
+                            const item2 = items[j] as GridCommand | TwoDPlaneCommand | LineGraphCommand;
 
                             const bounds1 = item1.bounds || { left: 0, top: 0, right: canvasW, bottom: canvasH };
                             const bounds2 = item2.bounds || { left: 0, top: 0, right: canvasW, bottom: canvasH };
@@ -120,6 +120,9 @@ export function parseStderr(stderrText: string): ParsedModes {
             lineIdx = result.lineIdx;
         } else if (cmd === '2D_PLANE' || cmd.startsWith('2D_PLANE(')) {
             const result = parse2DPlaneCommand(lines, lineIdx, remaining, mode, pendingRawText, pendingCommands, pendingErrors);
+            lineIdx = result.lineIdx;
+        } else if (cmd === 'LINE_GRAPH' || cmd.startsWith('LINE_GRAPH(')) {
+            const result = parseLineGraphCommand(lines, lineIdx, remaining, mode, pendingRawText, pendingCommands, pendingErrors);
             lineIdx = result.lineIdx;
         } else {
             // Unknown command
@@ -595,5 +598,87 @@ function parse2DPlaneCommand(
     };
 
     pendingCommands[mode].push(twoDPlaneCommand);
+    return { lineIdx };
+}
+
+function parseLineGraphCommand(
+    lines: string[],
+    lineIdx: number,
+    remaining: string,
+    mode: string,
+    pendingRawText: PendingRawText,
+    pendingCommands: PendingCommands,
+    pendingErrors: PendingErrors
+): { lineIdx: number } {
+    // Extract bounds if present in the command
+    const bounds = parseBoundsFromCommand(remaining);
+
+    const data: Point[] = [];
+    let cursor: number | undefined = undefined;
+
+    lineIdx++;
+
+    while (lineIdx < lines.length) {
+        let header = lines[lineIdx].trim();
+        while (header === '' && lineIdx < lines.length - 1) {
+            pendingRawText[mode] += lines[lineIdx] + "\n";
+            lineIdx++;
+            header = lines[lineIdx].trim();
+        }
+
+        if (header !== 'DATA' && header !== 'CURSOR') {
+            break;
+        }
+
+        pendingRawText[mode] += lines[lineIdx] + "\n";
+
+        if (header === 'DATA') {
+            lineIdx++;
+            if (lineIdx < lines.length) {
+                pendingRawText[mode] += lines[lineIdx] + "\n";
+                const dataLine = lines[lineIdx].trim();
+                const dataParts = dataLine.split(/\s+/);
+
+                if (dataParts.length >= 1) {
+                    const n = parseInt(dataParts[0]);
+                    if (!isNaN(n)) {
+                        // Parse n pairs of (x, y) coordinates
+                        for (let i = 0; i < n; i++) {
+                            const xIdx = 1 + i * 2;
+                            const yIdx = 1 + i * 2 + 1;
+                            if (xIdx < dataParts.length && yIdx < dataParts.length) {
+                                const x = parseFloat(dataParts[xIdx]);
+                                const y = parseFloat(dataParts[yIdx]);
+                                if (!isNaN(x) && !isNaN(y)) {
+                                    data.push({ x, y });
+                                }
+                            }
+                        }
+                    }
+                }
+                lineIdx++;
+            }
+        } else if (header === 'CURSOR') {
+            lineIdx++;
+            if (lineIdx < lines.length) {
+                pendingRawText[mode] += lines[lineIdx] + "\n";
+                const cursorLine = lines[lineIdx].trim();
+                const xc = parseFloat(cursorLine);
+                if (!isNaN(xc)) {
+                    cursor = xc;
+                }
+                lineIdx++;
+            }
+        }
+    }
+
+    const lineGraphCommand: LineGraphCommand = {
+        type: 'LINE_GRAPH',
+        data,
+        cursor,
+        bounds
+    };
+
+    pendingCommands[mode].push(lineGraphCommand);
     return { lineIdx };
 }

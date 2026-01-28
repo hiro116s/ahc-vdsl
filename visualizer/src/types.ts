@@ -95,7 +95,14 @@ export interface CanvasCommand {
     W: number;
 }
 
-export type Command = CanvasCommand | GridCommand | TextAreaCommand | ScoreCommand | DebugCommand | TwoDPlaneCommand;
+export interface LineGraphCommand {
+    type: 'LINE_GRAPH';
+    data: Point[];
+    cursor?: number; // Optional x-coordinate for vertical cursor line
+    bounds?: ItemBounds; // Optional bounds within canvas
+}
+
+export type Command = CanvasCommand | GridCommand | TextAreaCommand | ScoreCommand | DebugCommand | TwoDPlaneCommand | LineGraphCommand;
 
 export interface Frame {
     commands: Command[];
