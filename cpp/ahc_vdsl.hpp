@@ -393,41 +393,96 @@ public:
     }
 };
 
+class VisItem {
+public:
+    enum Type { GRID, PLANE };
+
+private:
+    Type type;
+    union {
+        VisGrid* grid;
+        Vis2DPlane* plane;
+    };
+
+public:
+    VisItem(const VisGrid& g) : type(GRID), grid(new VisGrid(g)) {}
+    VisItem(const Vis2DPlane& p) : type(PLANE), plane(new Vis2DPlane(p)) {}
+
+    ~VisItem() {
+        if (type == GRID) {
+            delete grid;
+        } else {
+            delete plane;
+        }
+    }
+
+    // Copy constructor
+    VisItem(const VisItem& other) : type(other.type) {
+        if (type == GRID) {
+            grid = new VisGrid(*other.grid);
+        } else {
+            plane = new Vis2DPlane(*other.plane);
+        }
+    }
+
+    // Assignment operator
+    VisItem& operator=(const VisItem& other) {
+        if (this != &other) {
+            if (type == GRID) {
+                delete grid;
+            } else {
+                delete plane;
+            }
+            type = other.type;
+            if (type == GRID) {
+                grid = new VisGrid(*other.grid);
+            } else {
+                plane = new Vis2DPlane(*other.plane);
+            }
+        }
+        return *this;
+    }
+
+    std::string to_vis_string(const std::string& mode) const {
+        if (type == GRID) {
+            return grid->to_vis_string(mode);
+        } else {
+            return plane->to_vis_string(mode);
+        }
+    }
+};
+
 class VisFrame {
     VisCanvas* vis_canvas;
-    VisGrid* vis_grid;
-    Vis2DPlane* vis_2d_plane;
+    std::vector<VisItem> items;
     std::string score;
     std::vector<std::string> textarea;
     bool with_debug;
 
 public:
-    VisFrame() : vis_canvas(nullptr), vis_grid(nullptr), vis_2d_plane(nullptr), with_debug(false) {}
+    VisFrame() : vis_canvas(nullptr), with_debug(false) {}
 
     static VisFrame new_grid(const VisGrid& grid, const std::string& score) {
         VisFrame frame;
-        frame.vis_grid = new VisGrid(grid);
+        frame.items.push_back(VisItem(grid));
         frame.score = score;
         return frame;
     }
 
     static VisFrame new_2d_plane(const Vis2DPlane& plane, const std::string& score) {
         VisFrame frame;
-        frame.vis_2d_plane = new Vis2DPlane(plane);
+        frame.items.push_back(VisItem(plane));
         frame.score = score;
         return frame;
     }
 
     ~VisFrame() {
         delete vis_canvas;
-        delete vis_grid;
-        delete vis_2d_plane;
     }
 
     VisFrame(const VisFrame& other)
         : vis_canvas(other.vis_canvas ? new VisCanvas(*other.vis_canvas) : nullptr),
-          vis_grid(other.vis_grid ? new VisGrid(*other.vis_grid) : nullptr),
-          vis_2d_plane(other.vis_2d_plane ? new Vis2DPlane(*other.vis_2d_plane) : nullptr),
+          items(other.items),
           score(other.score),
           textarea(other.textarea),
           with_debug(other.with_debug) {}
@@ -435,11 +490,8 @@ public:
     VisFrame& operator=(const VisFrame& other) {
         if (this != &other) {
             delete vis_canvas;
-            delete vis_grid;
-            delete vis_2d_plane;
             vis_canvas = other.vis_canvas ? new VisCanvas(*other.vis_canvas) : nullptr;
-            vis_grid = other.vis_grid ? new VisGrid(*other.vis_grid) : nullptr;
-            vis_2d_plane = other.vis_2d_plane ? new Vis2DPlane(*other.vis_2d_plane) : nullptr;
+            items = other.items;
             score = other.score;
             textarea = other.textarea;
             with_debug = other.with_debug;
@@ -450,6 +502,18 @@ public:
     void set_canvas(const VisCanvas& canvas) {
         delete vis_canvas;
         vis_canvas = new VisCanvas(canvas);
+    }
+
+    void add_grid(const VisGrid& grid) {
+        items.push_back(VisItem(grid));
+    }
+
+    void add_2d_plane(const Vis2DPlane& plane) {
+        items.push_back(VisItem(plane));
+    }
+
+    void add_item(const VisItem& item) {
+        items.push_back(item);
     }
 
     void add_textarea(const std::string& text) {
@@ -472,11 +536,9 @@ public:
             ss << vis_canvas->to_vis_string(mode);
         }
 
-        // Output grid or 2d_plane
-        if (vis_grid) {
-            ss << vis_grid->to_vis_string(mode);
-        } else if (vis_2d_plane) {
-            ss << vis_2d_plane->to_vis_string(mode);
+        // Output all items
+        for (const auto& item : items) {
+            ss << item.to_vis_string(mode);
         }
 
         // SCORE
@@ -621,12 +683,22 @@ public:
     std::string to_vis_string(const std::string&) const { return ""; }
 };
 
+class VisItem {
+public:
+    VisItem(const VisGrid&) {}
+    VisItem(const Vis2DPlane&) {}
+    std::string to_vis_string(const std::string&) const { return ""; }
+};
+
 class VisFrame {
 public:
     VisFrame() {}
     static VisFrame new_grid(const VisGrid&, const std::string&) { return VisFrame(); }
     static VisFrame new_2d_plane(const Vis2DPlane&, const std::string&) { return VisFrame(); }
     void set_canvas(const VisCanvas&) {}
+    void add_grid(const VisGrid&) {}
+    void add_2d_plane(const Vis2DPlane&) {}
+    void add_item(const VisItem&) {}
     void add_textarea(const std::string&) {}
     void enable_debug() {}
     void disable_debug() {}

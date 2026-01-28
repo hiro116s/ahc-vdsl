@@ -95,21 +95,43 @@ pub mod ahc_vdsl {
             }
         }
 
+        pub enum VisItem {
+            Grid(VisGrid),
+            Plane(Vis2DPlane),
+        }
+
+        impl VisItem {
+            pub fn to_vis_string(&self, mode: &str) -> String {
+                match self {
+                    VisItem::Grid(grid) => grid.to_vis_string(mode),
+                    VisItem::Plane(plane) => plane.to_vis_string(mode),
+                }
+            }
+        }
+
         pub struct VisFrame {
             vis_canvas: Option<VisCanvas>,
-            vis_grid: Option<VisGrid>,
-            vis_2d_plane: Option<Vis2DPlane>,
+            items: Vec<VisItem>,
             score: String,
             textarea: Vec<String>,
             with_debug: bool,
         }
 
         impl VisFrame {
+            pub fn new() -> Self {
+                Self {
+                    vis_canvas: None,
+                    items: Vec::new(),
+                    score: String::new(),
+                    textarea: Vec::new(),
+                    with_debug: false,
+                }
+            }
+
             pub fn new_grid<T: ToString>(grid: VisGrid, score: T) -> Self {
                 Self {
                     vis_canvas: None,
-                    vis_grid: Some(grid),
-                    vis_2d_plane: None,
+                    items: vec![VisItem::Grid(grid)],
                     score: score.to_string(),
                     textarea: Vec::new(),
                     with_debug: false,
@@ -119,8 +141,7 @@ pub mod ahc_vdsl {
             pub fn new_2d_plane<T: ToString>(plane: Vis2DPlane, score: T) -> Self {
                 Self {
                     vis_canvas: None,
-                    vis_grid: None,
-                    vis_2d_plane: Some(plane),
+                    items: vec![VisItem::Plane(plane)],
                     score: score.to_string(),
                     textarea: Vec::new(),
                     with_debug: false,
@@ -131,20 +152,16 @@ pub mod ahc_vdsl {
                 self.vis_canvas = Some(canvas);
             }
 
-            pub fn set_grid(&mut self, grid: VisGrid) {
-                assert!(
-                    self.vis_2d_plane.is_none(),
-                    "Cannot use GRID and 2D_PLANE in the same frame"
-                );
-                self.vis_grid = Some(grid);
+            pub fn add_grid(&mut self, grid: VisGrid) {
+                self.items.push(VisItem::Grid(grid));
             }
 
-            pub fn set_2d_plane(&mut self, plane: Vis2DPlane) {
-                assert!(
-                    self.vis_grid.is_none(),
-                    "Cannot use GRID and 2D_PLANE in the same frame"
-                );
-                self.vis_2d_plane = Some(plane);
+            pub fn add_2d_plane(&mut self, plane: Vis2DPlane) {
+                self.items.push(VisItem::Plane(plane));
+            }
+
+            pub fn add_item(&mut self, item: VisItem) {
+                self.items.push(item);
             }
 
             pub fn set_score(&mut self, score: String) {
@@ -171,11 +188,9 @@ pub mod ahc_vdsl {
                     output.push_str(&canvas.to_vis_string(mode));
                 }
 
-                // Output grid or 2d_plane
-                if let Some(grid) = &self.vis_grid {
-                    output.push_str(&grid.to_vis_string(mode));
-                } else if let Some(plane) = &self.vis_2d_plane {
-                    output.push_str(&plane.to_vis_string(mode));
+                // Output all items
+                for item in &self.items {
+                    output.push_str(&item.to_vis_string(mode));
                 }
 
                 // Output score
@@ -202,14 +217,7 @@ pub mod ahc_vdsl {
 
         impl Default for VisFrame {
             fn default() -> Self {
-                Self {
-                    vis_canvas: None,
-                    vis_grid: Some(VisGrid::new(0, 0)),
-                    vis_2d_plane: None,
-                    score: String::new(),
-                    textarea: Vec::new(),
-                    with_debug: false,
-                }
+                Self::new()
             }
         }
 
@@ -717,6 +725,11 @@ pub mod ahc_vdsl {
 
         impl VisFrame {
             #[inline(always)]
+            pub fn new() -> Self {
+                Self
+            }
+
+            #[inline(always)]
             pub fn new_grid<T: ToString>(_grid: VisGrid, _score: T) -> Self {
                 Self
             }
@@ -730,10 +743,13 @@ pub mod ahc_vdsl {
             pub fn set_canvas(&mut self, _canvas: VisCanvas) {}
 
             #[inline(always)]
-            pub fn set_grid(&mut self, _grid: VisGrid) {}
+            pub fn add_grid(&mut self, _grid: VisGrid) {}
 
             #[inline(always)]
-            pub fn set_2d_plane(&mut self, _plane: Vis2DPlane) {}
+            pub fn add_2d_plane(&mut self, _plane: Vis2DPlane) {}
+
+            #[inline(always)]
+            pub fn add_item(&mut self, _item: VisItem) {}
 
             #[inline(always)]
             pub fn set_score(&mut self, _score: String) {}
@@ -789,6 +805,19 @@ pub mod ahc_vdsl {
             #[inline(always)]
             fn default() -> Self {
                 Self
+            }
+        }
+
+        // VisItem - Zero-Sized Type
+        pub enum VisItem {
+            Grid(VisGrid),
+            Plane(Vis2DPlane),
+        }
+
+        impl VisItem {
+            #[inline(always)]
+            pub fn to_vis_string(&self, _mode: &str) -> String {
+                String::new()
             }
         }
 
