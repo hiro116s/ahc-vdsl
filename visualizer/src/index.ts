@@ -1,7 +1,7 @@
 import './styles.css';
 import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand, CanvasCommand } from './types';
 import { parseStderr } from './parser';
-import { renderGridFromCommand, render2DPlaneFromCommand } from './renderer';
+import { createCanvasSvg, renderGridFromCommand, render2DPlaneFromCommand } from './renderer';
 
 // DOM Elements
 const seedInput = document.getElementById('seedInput') as HTMLInputElement;
@@ -300,11 +300,14 @@ function renderCurrentFrame(): void {
         infoDiv.appendChild(debugContainer);
     }
 
+    // Create single SVG canvas for all items
+    const svg = createCanvasSvg(canvasDiv, canvasW, canvasH);
+
     for (const cmd of commands) {
         if (cmd.type === 'GRID') {
-            renderGridFromCommand(canvasDiv, cmd as GridCommand, canvasW, canvasH);
+            renderGridFromCommand(svg, cmd as GridCommand, canvasW, canvasH);
         } else if (cmd.type === '2D_PLANE') {
-            render2DPlaneFromCommand(canvasDiv, cmd as TwoDPlaneCommand, canvasW, canvasH);
+            render2DPlaneFromCommand(svg, cmd as TwoDPlaneCommand, canvasW, canvasH);
         } else if (cmd.type === 'CANVAS') {
             // Canvas command is handled above for sizing, no visual rendering needed
         } else if (cmd.type === 'TEXTAREA') {

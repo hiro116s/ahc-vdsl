@@ -2,8 +2,21 @@ import { GridCommand, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, Polygo
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+// Create a canvas SVG element
+export function createCanvasSvg(container: HTMLElement, canvasW: number, canvasH: number): SVGSVGElement {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("width", String(canvasW));
+    svg.setAttribute("height", String(canvasH));
+    svg.setAttribute("viewBox", `0 0 ${canvasW} ${canvasH}`);
+    svg.style.margin = "10px 0";
+    svg.style.display = "block";
+    svg.style.overflow = "visible";
+    container.appendChild(svg);
+    return svg;
+}
+
 export function renderGrid(
-    container: HTMLElement,
+    svg: SVGSVGElement,
     H: number,
     W: number,
     borderColor: string,
@@ -13,8 +26,6 @@ export function renderGrid(
     gridLines: GridLine[],
     wallVertical: string[] = [],
     wallHorizontal: string[] = [],
-    canvasW: number = 800,
-    canvasH: number = 800,
     left: number = 0,
     top: number = 0,
     right: number = 800,
@@ -25,14 +36,6 @@ export function renderGrid(
     const drawHeight = bottom - top;
     const cellWidth = drawWidth / W;
     const cellHeight = drawHeight / H;
-
-    const svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("width", String(canvasW));
-    svg.setAttribute("height", String(canvasH));
-    svg.setAttribute("viewBox", `0 0 ${canvasW} ${canvasH}`);
-    svg.style.margin = "10px 0";
-    svg.style.display = "block";
-    svg.style.overflow = "visible";
 
     // Create a group for this grid item with offset
     const g = document.createElementNS(SVG_NS, "g");
@@ -238,13 +241,12 @@ export function renderGrid(
     }
 
     svg.appendChild(g);
-    container.appendChild(svg);
 }
 
-export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand, canvasW: number = 800, canvasH: number = 800): void {
+export function renderGridFromCommand(svg: SVGSVGElement, cmd: GridCommand, canvasW: number = 800, canvasH: number = 800): void {
     const bounds = cmd.bounds || { left: 0, top: 0, right: canvasW, bottom: canvasH };
     renderGrid(
-        container,
+        svg,
         cmd.H,
         cmd.W,
         cmd.borderColor,
@@ -254,8 +256,6 @@ export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand, 
         cmd.gridLines,
         cmd.wallVertical,
         cmd.wallHorizontal,
-        canvasW,
-        canvasH,
         bounds.left,
         bounds.top,
         bounds.right,
@@ -264,14 +264,12 @@ export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand, 
 }
 
 export function render2DPlane(
-    container: HTMLElement,
+    svg: SVGSVGElement,
     H: number,
     W: number,
     circleGroups: CircleGroup[],
     lineGroups: LineGroup[],
     polygonGroups: PolygonGroup[],
-    canvasW: number = 800,
-    canvasH: number = 800,
     left: number = 0,
     top: number = 0,
     right: number = 800,
@@ -280,14 +278,6 @@ export function render2DPlane(
     // Calculate the actual drawing area based on bounds
     const drawWidth = right - left;
     const drawHeight = bottom - top;
-
-    const svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("width", String(canvasW));
-    svg.setAttribute("height", String(canvasH));
-    svg.setAttribute("viewBox", `0 0 ${canvasW} ${canvasH}`);
-    svg.style.margin = "10px 0";
-    svg.style.display = "block";
-    svg.style.overflow = "visible";
 
     // Create a group for this 2D plane item with offset
     const g = document.createElementNS(SVG_NS, "g");
@@ -374,20 +364,17 @@ export function render2DPlane(
     }
 
     svg.appendChild(g);
-    container.appendChild(svg);
 }
 
-export function render2DPlaneFromCommand(container: HTMLElement, cmd: TwoDPlaneCommand, canvasW: number = 800, canvasH: number = 800): void {
+export function render2DPlaneFromCommand(svg: SVGSVGElement, cmd: TwoDPlaneCommand, canvasW: number = 800, canvasH: number = 800): void {
     const bounds = cmd.bounds || { left: 0, top: 0, right: canvasW, bottom: canvasH };
     render2DPlane(
-        container,
+        svg,
         cmd.H,
         cmd.W,
         cmd.circleGroups,
         cmd.lineGroups,
         cmd.polygonGroups,
-        canvasW,
-        canvasH,
         bounds.left,
         bounds.top,
         bounds.right,
