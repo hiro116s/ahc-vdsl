@@ -25,6 +25,31 @@ export function renderGrid(
     svg.style.display = "block";
     svg.style.overflow = "visible";
 
+    // Find maximum character count across all cells
+    let maxCharCount = 1;
+    if (gridTexts) {
+        for (let y = 0; y < H; y++) {
+            if (y < gridTexts.length) {
+                for (let x = 0; x < W; x++) {
+                    if (x < gridTexts[y].length) {
+                        const rawText = gridTexts[y][x];
+                        const displayText = rawText.length > 5 ? rawText.substring(0, 5) + "..." : rawText;
+                        maxCharCount = Math.max(maxCharCount, displayText.length);
+                    }
+                }
+            }
+        }
+    }
+
+    // Calculate unified font size based on maximum character count
+    let unifiedFontSize: number;
+    if (maxCharCount <= 4) {
+        unifiedFontSize = Math.min(cellHeight * 0.7, (cellWidth / maxCharCount) * 1.2);
+    } else {
+        unifiedFontSize = Math.min(cellHeight * 0.6, cellWidth / 5.5);
+    }
+    unifiedFontSize = Math.min(unifiedFontSize, 30);
+
     // Render cells
     for (let y = 0; y < H; y++) {
         for (let x = 0; x < W; x++) {
@@ -64,23 +89,11 @@ export function renderGrid(
 
             // Render Text
             if (textContent) {
-                const charCount = textContent.length;
-                const effectiveChars = Math.max(charCount, 1);
-
-                let usedFontSize: number;
-                if (charCount <= 4) {
-                    usedFontSize = Math.min(cellHeight * 0.7, (cellWidth / effectiveChars) * 1.2);
-                } else {
-                    usedFontSize = Math.min(cellHeight * 0.6, cellWidth / 5.5);
-                }
-
-                usedFontSize = Math.min(usedFontSize, 30);
-
                 const textElement = document.createElementNS(SVG_NS, "text");
                 textElement.setAttribute("x", String(x * cellWidth + cellWidth / 2));
                 textElement.setAttribute("y", String(y * cellHeight + cellHeight / 2));
                 textElement.setAttribute("fill", textColor);
-                textElement.setAttribute("font-size", String(usedFontSize));
+                textElement.setAttribute("font-size", String(unifiedFontSize));
                 textElement.setAttribute("font-family", "sans-serif");
                 textElement.setAttribute("text-anchor", "middle");
                 textElement.setAttribute("dominant-baseline", "middle");
