@@ -204,7 +204,49 @@ $v(MODE) TEXTAREA DebugInfo: ...
 $v(MODE) SCORE 12345
 ```
 
-### 6. デバッグ表示: `$v(MODE) DEBUG`
+### 6. 折れ線グラフ: `$v(MODE) LINE_GRAPH`
+
+折れ線グラフを描画します。
+
+**基本構文:**
+```text
+$v(MODE) LINE_GRAPH(left, top, right, bottom)
+```
+
+- `left, top, right, bottom`: キャンバス内での相対的な位置を指定します。
+
+この行の直後に、以下のセクションヘッダを使用して詳細データを記述します（ここは `$v` プレフィックス無し）。
+
+#### A. データ点: `DATA`
+
+グラフに描画するデータ点を指定します。i番目とi+1番目の点を線でつなぎます。
+
+```text
+DATA
+[点の数n] [x0] [y0] [x1] [y1] ... (n個のx,y座標ペア)
+```
+
+#### B. カーソル線: `CURSOR` (オプション)
+
+x=xcの位置に垂直線を描画します。
+
+```text
+CURSOR
+[xc]
+```
+
+**使用例:**
+```rust
+// 折れ線グラフを描画
+eprintln!("$v(main) LINE_GRAPH(0, 0, 800, 400)");
+eprintln!("DATA");
+eprintln!("5 0.0 1.0 1.0 2.0 2.0 1.5 3.0 3.0 4.0 2.5");
+eprintln!("CURSOR");
+eprintln!("2.0");
+eprintln!("$v(main) COMMIT");
+```
+
+### 7. デバッグ表示: `$v(MODE) DEBUG`
 
 このコマンドが含まれるフレームでは、そのフレームを構成するために出力された生のコマンド文字列を、ビジュアライザの右側に追加表示します。デバッグ用途に便利です。
 

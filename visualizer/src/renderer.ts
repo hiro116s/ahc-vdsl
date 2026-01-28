@@ -1,4 +1,4 @@
-import { GridCommand, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup } from './types';
+import { GridCommand, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, LineGraphCommand } from './types';
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -375,6 +375,142 @@ export function render2DPlaneFromCommand(svg: SVGSVGElement, cmd: TwoDPlaneComma
         cmd.circleGroups,
         cmd.lineGroups,
         cmd.polygonGroups,
+        bounds.left,
+        bounds.top,
+        bounds.right,
+        bounds.bottom
+    );
+}
+
+export function renderLineGraph(
+    svg: SVGSVGElement,
+    data: { x: number; y: number }[],
+    cursor: number | undefined,
+    left: number = 0,
+    top: number = 0,
+    right: number = 800,
+    bottom: number = 800
+): void {
+    if (data.length === 0) {
+        return;
+    }
+
+    // Calculate the actual drawing area based on bounds
+    const drawWidth = right - left;
+    const drawHeight = bottom - top;
+
+    // Create a group for this line graph item with offset
+    const g = document.createElementNS(SVG_NS, "g");
+    g.setAttribute("transform", `translate(${left}, ${top})`);
+
+    // Add a white background
+    const background = document.createElementNS(SVG_NS, "rect");
+    background.setAttribute("x", "0");
+    background.setAttribute("y", "0");
+    background.setAttribute("width", String(drawWidth));
+    background.setAttribute("height", String(drawHeight));
+    background.setAttribute("fill", "white");
+    background.setAttribute("stroke", "#ddd");
+    background.setAttribute("stroke-width", "1");
+    g.appendChild(background);
+
+    // Find data ranges
+    let minX = data[0].x;
+    let maxX = data[0].x;
+    let minY = data[0].y;
+    let maxY = data[0].y;
+
+    for (const point of data) {
+        minX = Math.min(minX, point.x);
+        maxX = Math.max(maxX, point.x);
+        minY = Math.min(minY, point.y);
+        maxY = Math.max(maxY, point.y);
+    }
+
+    // Add some padding to the ranges
+    const rangeX = maxX - minX;
+    const rangeY = maxY - minY;
+    const paddingX = rangeX > 0 ? rangeX * 0.1 : 1;
+    const paddingY = rangeY > 0 ? rangeY * 0.1 : 1;
+
+    minX -= paddingX;
+    maxX += paddingX;
+    minY -= paddingY;
+    maxY += paddingY;
+
+    const finalRangeX = maxX - minX;
+    const finalRangeY = maxY - minY;
+
+    // Function to convert data coordinates to SVG coordinates
+    const toSvgX = (x: number) => ((x - minX) / finalRangeX) * drawWidth;
+    const toSvgY = (y: number) => drawHeight - ((y - minY) / finalRangeY) * drawHeight;
+
+    // Draw the line graph (connecting consecutive points)
+    if (data.length >= 2) {
+        let pathData = "";
+        for (let i = 0; i < data.length - 1; i++) {
+            const x1 = toSvgX(data[i].x);
+            const y1 = toSvgY(data[i].y);
+            const x2 = toSvgX(data[i + 1].x);
+            const y2 = toSvgY(data[i + 1].y);
+
+            const line = document.createElementNS(SVG_NS, "line");
+            line.setAttribute("x1", String(x1));
+            line.setAttribute("y1", String(y1));
+            line.setAttribute("x2", String(x2));
+            line.setAttribute("y2", String(y2));
+            line.setAttribute("stroke", "blue");
+            line.setAttribute("stroke-width", "2");
+            line.setAttribute("stroke-linecap", "round");
+            g.appendChild(line);
+        }
+    }
+
+    // Draw circles at data points
+    for (const point of data) {
+        const cx = toSvgX(point.x);
+        const cy = toSvgY(point.y);
+
+        const circle = document.createElementNS(SVG_NS, "circle");
+        circle.setAttribute("cx", String(cx));
+        circle.setAttribute("cy", String(cy));
+        circle.setAttribute("r", "4");
+        circle.setAttribute("fill", "blue");
+        circle.setAttribute("stroke", "white");
+        circle.setAttribute("stroke-width", "1");
+
+        // Add tooltip
+        const title = document.createElementNS(SVG_NS, "title");
+        title.textContent = `(${point.x.toFixed(2)}, ${point.y.toFixed(2)})`;
+        circle.appendChild(title);
+
+        g.appendChild(circle);
+    }
+
+    // Draw cursor line if specified
+    if (cursor !== undefined) {
+        const cursorX = toSvgX(cursor);
+
+        const cursorLine = document.createElementNS(SVG_NS, "line");
+        cursorLine.setAttribute("x1", String(cursorX));
+        cursorLine.setAttribute("y1", "0");
+        cursorLine.setAttribute("x2", String(cursorX));
+        cursorLine.setAttribute("y2", String(drawHeight));
+        cursorLine.setAttribute("stroke", "red");
+        cursorLine.setAttribute("stroke-width", "2");
+        cursorLine.setAttribute("stroke-dasharray", "5,5");
+        g.appendChild(cursorLine);
+    }
+
+    svg.appendChild(g);
+}
+
+export function renderLineGraphFromCommand(svg: SVGSVGElement, cmd: LineGraphCommand, canvasW: number = 800, canvasH: number = 800): void {
+    const bounds = cmd.bounds || { left: 0, top: 0, right: canvasW, bottom: canvasH };
+    renderLineGraph(
+        svg,
+        cmd.data,
+        cmd.cursor,
         bounds.left,
         bounds.top,
         bounds.right,
