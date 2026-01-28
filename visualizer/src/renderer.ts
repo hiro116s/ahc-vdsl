@@ -12,18 +12,31 @@ export function renderGrid(
     gridTexts: string[][],
     gridLines: GridLine[],
     wallVertical: string[] = [],
-    wallHorizontal: string[] = []
+    wallHorizontal: string[] = [],
+    canvasW: number = 800,
+    canvasH: number = 800,
+    minX: number = 0,
+    minY: number = 0,
+    maxX: number = 800,
+    maxY: number = 800
 ): void {
-    const canvasSize = 800;
-    const cellWidth = canvasSize / W;
-    const cellHeight = canvasSize / H;
+    // Calculate the actual drawing area based on bounds
+    const drawWidth = maxX - minX;
+    const drawHeight = maxY - minY;
+    const cellWidth = drawWidth / W;
+    const cellHeight = drawHeight / H;
 
     const svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("width", String(canvasSize));
-    svg.setAttribute("height", String(canvasSize));
+    svg.setAttribute("width", String(canvasW));
+    svg.setAttribute("height", String(canvasH));
+    svg.setAttribute("viewBox", `0 0 ${canvasW} ${canvasH}`);
     svg.style.margin = "10px 0";
     svg.style.display = "block";
     svg.style.overflow = "visible";
+
+    // Create a group for this grid item with offset
+    const g = document.createElementNS(SVG_NS, "g");
+    g.setAttribute("transform", `translate(${minX}, ${minY})`);
 
     // Find maximum character count across all cells
     let maxCharCount = 1;
@@ -85,7 +98,7 @@ export function renderGrid(
             title.textContent = titleText;
             rect.appendChild(title);
 
-            svg.appendChild(rect);
+            g.appendChild(rect);
 
             // Render Text
             if (textContent) {
@@ -99,7 +112,7 @@ export function renderGrid(
                 textElement.setAttribute("dominant-baseline", "middle");
                 textElement.setAttribute("pointer-events", "none");
                 textElement.textContent = textContent;
-                svg.appendChild(textElement);
+                g.appendChild(textElement);
             }
         }
     }
@@ -123,7 +136,7 @@ export function renderGrid(
                         line.setAttribute("stroke", borderColor);
                         line.setAttribute("stroke-width", String(wallWidth));
                         line.setAttribute("pointer-events", "none");
-                        svg.appendChild(line);
+                        g.appendChild(line);
                     }
                 }
             }
@@ -140,7 +153,7 @@ export function renderGrid(
                 line.setAttribute("stroke", borderColor);
                 line.setAttribute("stroke-width", String(wallWidth));
                 line.setAttribute("pointer-events", "none");
-                svg.appendChild(line);
+                g.appendChild(line);
             }
         }
     }
@@ -161,7 +174,7 @@ export function renderGrid(
                         line.setAttribute("stroke", borderColor);
                         line.setAttribute("stroke-width", String(wallWidth));
                         line.setAttribute("pointer-events", "none");
-                        svg.appendChild(line);
+                        g.appendChild(line);
                     }
                 }
             }
@@ -178,7 +191,7 @@ export function renderGrid(
                 line.setAttribute("stroke", borderColor);
                 line.setAttribute("stroke-width", String(wallWidth));
                 line.setAttribute("pointer-events", "none");
-                svg.appendChild(line);
+                g.appendChild(line);
             }
         }
     }
@@ -205,7 +218,7 @@ export function renderGrid(
             polyline.setAttribute("stroke-linejoin", "round");
             polyline.setAttribute("stroke-linecap", "round");
             polyline.setAttribute("pointer-events", "none");
-            svg.appendChild(polyline);
+            g.appendChild(polyline);
 
             // Draw circles at vertices
             const circleRadius = Math.min(cellWidth, cellHeight) * 0.05;
@@ -219,15 +232,17 @@ export function renderGrid(
                 circle.setAttribute("r", String(circleRadius));
                 circle.setAttribute("fill", color);
                 circle.setAttribute("pointer-events", "none");
-                svg.appendChild(circle);
+                g.appendChild(circle);
             }
         }
     }
 
+    svg.appendChild(g);
     container.appendChild(svg);
 }
 
-export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand): void {
+export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand, canvasW: number = 800, canvasH: number = 800): void {
+    const bounds = cmd.bounds || { minX: 0, minY: 0, maxX: canvasW, maxY: canvasH };
     renderGrid(
         container,
         cmd.H,
@@ -238,7 +253,13 @@ export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand):
         cmd.gridTexts,
         cmd.gridLines,
         cmd.wallVertical,
-        cmd.wallHorizontal
+        cmd.wallHorizontal,
+        canvasW,
+        canvasH,
+        bounds.minX,
+        bounds.minY,
+        bounds.maxX,
+        bounds.maxY
     );
 }
 
@@ -248,27 +269,38 @@ export function render2DPlane(
     W: number,
     circleGroups: CircleGroup[],
     lineGroups: LineGroup[],
-    polygonGroups: PolygonGroup[]
+    polygonGroups: PolygonGroup[],
+    canvasW: number = 800,
+    canvasH: number = 800,
+    minX: number = 0,
+    minY: number = 0,
+    maxX: number = 800,
+    maxY: number = 800
 ): void {
-    const canvasSize = 800;
-    const windowWidth = canvasSize;
-    const windowHeight = canvasSize;
+    // Calculate the actual drawing area based on bounds
+    const drawWidth = maxX - minX;
+    const drawHeight = maxY - minY;
 
     const svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("width", String(windowWidth));
-    svg.setAttribute("height", String(windowHeight));
+    svg.setAttribute("width", String(canvasW));
+    svg.setAttribute("height", String(canvasH));
+    svg.setAttribute("viewBox", `0 0 ${canvasW} ${canvasH}`);
     svg.style.margin = "10px 0";
     svg.style.display = "block";
     svg.style.overflow = "visible";
+
+    // Create a group for this 2D plane item with offset
+    const g = document.createElementNS(SVG_NS, "g");
+    g.setAttribute("transform", `translate(${minX}, ${minY})`);
 
     // Add a white background
     const background = document.createElementNS(SVG_NS, "rect");
     background.setAttribute("x", "0");
     background.setAttribute("y", "0");
-    background.setAttribute("width", String(windowWidth));
-    background.setAttribute("height", String(windowHeight));
+    background.setAttribute("width", String(drawWidth));
+    background.setAttribute("height", String(drawHeight));
     background.setAttribute("fill", "white");
-    svg.appendChild(background);
+    g.appendChild(background);
 
     // Render polygons first (so they appear behind circles and lines)
     for (const polygonGroup of polygonGroups) {
@@ -279,8 +311,8 @@ export function render2DPlane(
 
         let pointsStr = "";
         for (const pt of points) {
-            const px = (pt.x / W) * windowWidth;
-            const py = (pt.y / H) * windowHeight;
+            const px = (pt.x / W) * drawWidth;
+            const py = (pt.y / H) * drawHeight;
             pointsStr += `${px},${py} `;
         }
 
@@ -290,7 +322,7 @@ export function render2DPlane(
         polygonElement.setAttribute("stroke", lineColor);
         polygonElement.setAttribute("stroke-width", "2");
         polygonElement.setAttribute("stroke-linejoin", "miter");
-        svg.appendChild(polygonElement);
+        g.appendChild(polygonElement);
     }
 
     // Render lines
@@ -298,10 +330,10 @@ export function render2DPlane(
         const { color, lines } = lineGroup;
 
         for (const line of lines) {
-            const x1 = (line.ax / W) * windowWidth;
-            const y1 = (line.ay / H) * windowHeight;
-            const x2 = (line.bx / W) * windowWidth;
-            const y2 = (line.by / H) * windowHeight;
+            const x1 = (line.ax / W) * drawWidth;
+            const y1 = (line.ay / H) * drawHeight;
+            const x2 = (line.bx / W) * drawWidth;
+            const y2 = (line.by / H) * drawHeight;
 
             const lineElement = document.createElementNS(SVG_NS, "line");
             lineElement.setAttribute("x1", String(x1));
@@ -311,7 +343,7 @@ export function render2DPlane(
             lineElement.setAttribute("stroke", color);
             lineElement.setAttribute("stroke-width", "2");
             lineElement.setAttribute("stroke-linecap", "round");
-            svg.appendChild(lineElement);
+            g.appendChild(lineElement);
         }
     }
 
@@ -320,9 +352,9 @@ export function render2DPlane(
         const { lineColor, fillColor, circles } = circleGroup;
 
         for (const circle of circles) {
-            const cx = (circle.x / W) * windowWidth;
-            const cy = (circle.y / H) * windowHeight;
-            const r = (circle.r / W) * windowWidth; // Scale radius based on width
+            const cx = (circle.x / W) * drawWidth;
+            const cy = (circle.y / H) * drawHeight;
+            const r = (circle.r / W) * drawWidth; // Scale radius based on width
 
             const circleElement = document.createElementNS(SVG_NS, "circle");
             circleElement.setAttribute("cx", String(cx));
@@ -337,20 +369,28 @@ export function render2DPlane(
             title.textContent = `Circle at (${circle.x.toFixed(2)}, ${circle.y.toFixed(2)}), r=${circle.r.toFixed(2)}`;
             circleElement.appendChild(title);
 
-            svg.appendChild(circleElement);
+            g.appendChild(circleElement);
         }
     }
 
+    svg.appendChild(g);
     container.appendChild(svg);
 }
 
-export function render2DPlaneFromCommand(container: HTMLElement, cmd: TwoDPlaneCommand): void {
+export function render2DPlaneFromCommand(container: HTMLElement, cmd: TwoDPlaneCommand, canvasW: number = 800, canvasH: number = 800): void {
+    const bounds = cmd.bounds || { minX: 0, minY: 0, maxX: canvasW, maxY: canvasH };
     render2DPlane(
         container,
         cmd.H,
         cmd.W,
         cmd.circleGroups,
         cmd.lineGroups,
-        cmd.polygonGroups
+        cmd.polygonGroups,
+        canvasW,
+        canvasH,
+        bounds.minX,
+        bounds.minY,
+        bounds.maxX,
+        bounds.maxY
     );
 }

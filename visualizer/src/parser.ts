@@ -1,4 +1,4 @@
-import { ParsedModes, Frame, GridCommand, Command, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup } from './types';
+import { ParsedModes, Frame, GridCommand, Command, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, CanvasCommand, ItemBounds } from './types';
 
 interface PendingCommands {
     [mode: string]: Command[];
@@ -62,23 +62,29 @@ export function parseStderr(stderrText: string): ParsedModes {
 
         if (cmd === 'COMMIT') {
             if (pendingCommands[mode].length > 0) {
-                // Check for GRID and 2D_PLANE mutual exclusion
-                const hasGrid = pendingCommands[mode].some(c => c.type === 'GRID');
-                const has2DPlane = pendingCommands[mode].some(c => c.type === '2D_PLANE');
+                // Check for overlapping items
+                const items = pendingCommands[mode].filter(c => c.type === 'GRID' || c.type === '2D_PLANE');
+                if (items.length > 1) {
+                    // Get canvas size
+                    const canvasCmd = pendingCommands[mode].find(c => c.type === 'CANVAS') as CanvasCommand | undefined;
+                    const canvasW = canvasCmd ? canvasCmd.W : 800;
+                    const canvasH = canvasCmd ? canvasCmd.H : 800;
 
-                if (hasGrid && has2DPlane) {
-                    // Keep only the first one and add an error
-                    const gridIdx = pendingCommands[mode].findIndex(c => c.type === 'GRID');
-                    const planeIdx = pendingCommands[mode].findIndex(c => c.type === '2D_PLANE');
+                    // Check for overlaps
+                    for (let i = 0; i < items.length; i++) {
+                        for (let j = i + 1; j < items.length; j++) {
+                            const item1 = items[i] as GridCommand | TwoDPlaneCommand;
+                            const item2 = items[j] as GridCommand | TwoDPlaneCommand;
 
-                    if (gridIdx < planeIdx) {
-                        // Remove 2D_PLANE
-                        pendingCommands[mode] = pendingCommands[mode].filter(c => c.type !== '2D_PLANE');
-                        pendingErrors[mode].push(`Frame conflict: Both GRID and 2D_PLANE commands found in mode '${mode}'. Only GRID is displayed.`);
-                    } else {
-                        // Remove GRID
-                        pendingCommands[mode] = pendingCommands[mode].filter(c => c.type !== 'GRID');
-                        pendingErrors[mode].push(`Frame conflict: Both GRID and 2D_PLANE commands found in mode '${mode}'. Only 2D_PLANE is displayed.`);
+                            const bounds1 = item1.bounds || { minX: 0, minY: 0, maxX: canvasW, maxY: canvasH };
+                            const bounds2 = item2.bounds || { minX: 0, minY: 0, maxX: canvasW, maxY: canvasH };
+
+                            // Check if rectangles overlap
+                            if (!(bounds1.maxX <= bounds2.minX || bounds2.maxX <= bounds1.minX ||
+                                  bounds1.maxY <= bounds2.minY || bounds2.maxY <= bounds1.minY)) {
+                                pendingErrors[mode].push(`Item overlap detected: Items at positions (${bounds1.minX},${bounds1.minY})-(${bounds1.maxX},${bounds1.maxY}) and (${bounds2.minX},${bounds2.minY})-(${bounds2.maxX},${bounds2.maxY}) overlap.`);
+                            }
+                        }
                     }
                 }
 
@@ -93,6 +99,9 @@ export function parseStderr(stderrText: string): ParsedModes {
                 pendingErrors[mode] = [];
             }
             lineIdx++;
+        } else if (cmd === 'CANVAS') {
+            const result = parseCanvasCommand(parts, mode, pendingCommands, pendingErrors, lineIdx);
+            lineIdx = result.lineIdx;
         } else if (cmd === 'DEBUG') {
             pendingCommands[mode].push({ type: 'DEBUG' });
             lineIdx++;
@@ -106,11 +115,11 @@ export function parseStderr(stderrText: string): ParsedModes {
             const score = remaining.substring(sIndex + 5).trim();
             pendingCommands[mode].push({ type: 'SCORE', score });
             lineIdx++;
-        } else if (cmd === 'GRID') {
-            const result = parseGridCommand(lines, lineIdx, parts, mode, pendingRawText, pendingCommands, pendingErrors);
+        } else if (cmd === 'GRID' || cmd.startsWith('GRID(')) {
+            const result = parseGridCommand(lines, lineIdx, remaining, mode, pendingRawText, pendingCommands, pendingErrors);
             lineIdx = result.lineIdx;
-        } else if (cmd === '2D_PLANE') {
-            const result = parse2DPlaneCommand(lines, lineIdx, parts, mode, pendingRawText, pendingCommands, pendingErrors);
+        } else if (cmd === '2D_PLANE' || cmd.startsWith('2D_PLANE(')) {
+            const result = parse2DPlaneCommand(lines, lineIdx, remaining, mode, pendingRawText, pendingCommands, pendingErrors);
             lineIdx = result.lineIdx;
         } else {
             // Unknown command
@@ -136,25 +145,97 @@ export function parseStderr(stderrText: string): ParsedModes {
     return parsedModes;
 }
 
+function parseCanvasCommand(
+    parts: string[],
+    mode: string,
+    pendingCommands: PendingCommands,
+    pendingErrors: PendingErrors,
+    lineIdx: number
+): { lineIdx: number } {
+    if (parts.length < 3) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: CANVAS command requires 2 parameters (H W), got ${parts.length - 1}`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    const H = parseFloat(parts[1]);
+    const W = parseFloat(parts[2]);
+
+    if (isNaN(H) || isNaN(W)) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: CANVAS H and W must be numbers, got H='${parts[1]}' W='${parts[2]}'`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    if (H <= 0 || W <= 0) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: CANVAS H and W must be positive, got H=${H} W=${W}`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    const canvasCommand: CanvasCommand = {
+        type: 'CANVAS',
+        H, W
+    };
+
+    pendingCommands[mode].push(canvasCommand);
+    return { lineIdx: lineIdx + 1 };
+}
+
+function parseBoundsFromCommand(commandStr: string): ItemBounds | undefined {
+    // Parse bounds like GRID(min_x, min_y, max_x, max_y) or 2D_PLANE(min_x, min_y, max_x, max_y)
+    const match = commandStr.match(/\(([^)]+)\)/);
+    if (!match) {
+        return undefined;
+    }
+
+    const boundsStr = match[1];
+    const boundsParts = boundsStr.split(',').map(s => s.trim());
+    if (boundsParts.length !== 4) {
+        return undefined;
+    }
+
+    const minX = parseFloat(boundsParts[0]);
+    const minY = parseFloat(boundsParts[1]);
+    const maxX = parseFloat(boundsParts[2]);
+    const maxY = parseFloat(boundsParts[3]);
+
+    if (isNaN(minX) || isNaN(minY) || isNaN(maxX) || isNaN(maxY)) {
+        return undefined;
+    }
+
+    return { minX, minY, maxX, maxY };
+}
+
 function parseGridCommand(
     lines: string[],
     lineIdx: number,
-    parts: string[],
+    remaining: string,
     mode: string,
     pendingRawText: PendingRawText,
     pendingCommands: PendingCommands,
     pendingErrors: PendingErrors
 ): { lineIdx: number } {
-    if (parts.length < 6) {
-        pendingErrors[mode].push(`Line ${lineIdx + 1}: GRID command requires 5 parameters (H W borderColor textColor defaultCellColor), got ${parts.length - 1}`);
+    // Extract bounds if present in the command
+    const bounds = parseBoundsFromCommand(remaining);
+
+    // Remove bounds from remaining string if present
+    let paramStr = remaining;
+    if (bounds) {
+        paramStr = remaining.replace(/GRID\([^)]+\)\s*/, 'GRID ').substring(5).trim();
+    } else {
+        paramStr = remaining.replace(/^GRID\s*/, '').trim();
+    }
+
+    const parts = paramStr.split(/\s+/);
+
+    if (parts.length < 5) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: GRID command requires 5 parameters (H W borderColor textColor defaultCellColor), got ${parts.length}`);
         return { lineIdx: lineIdx + 1 };
     }
 
-    const H = parseInt(parts[1]);
-    const W = parseInt(parts[2]);
-    const borderColor = parts[3];
-    const textColor = parts[4];
-    const defaultCellColor = parts[5];
+    const H = parseInt(parts[0]);
+    const W = parseInt(parts[1]);
+    const borderColor = parts[2];
+    const textColor = parts[3];
+    const defaultCellColor = parts[4];
 
     if (isNaN(H) || isNaN(W)) {
         pendingErrors[mode].push(`Line ${lineIdx + 1}: GRID H and W must be integers, got H='${parts[1]}' W='${parts[2]}'`);
@@ -334,7 +415,8 @@ function parseGridCommand(
         type: 'GRID',
         H, W, borderColor, textColor,
         gridColors, gridTexts, gridLines,
-        wallVertical, wallHorizontal
+        wallVertical, wallHorizontal,
+        bounds
     };
 
     pendingCommands[mode].push(gridCommand);
@@ -344,19 +426,32 @@ function parseGridCommand(
 function parse2DPlaneCommand(
     lines: string[],
     lineIdx: number,
-    parts: string[],
+    remaining: string,
     mode: string,
     pendingRawText: PendingRawText,
     pendingCommands: PendingCommands,
     pendingErrors: PendingErrors
 ): { lineIdx: number } {
-    if (parts.length < 3) {
-        pendingErrors[mode].push(`Line ${lineIdx + 1}: 2D_PLANE command requires 2 parameters (H W), got ${parts.length - 1}`);
+    // Extract bounds if present in the command
+    const bounds = parseBoundsFromCommand(remaining);
+
+    // Remove bounds from remaining string if present
+    let paramStr = remaining;
+    if (bounds) {
+        paramStr = remaining.replace(/2D_PLANE\([^)]+\)\s*/, '2D_PLANE ').substring(9).trim();
+    } else {
+        paramStr = remaining.replace(/^2D_PLANE\s*/, '').trim();
+    }
+
+    const parts = paramStr.split(/\s+/);
+
+    if (parts.length < 2) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: 2D_PLANE command requires 2 parameters (H W), got ${parts.length}`);
         return { lineIdx: lineIdx + 1 };
     }
 
-    const H = parseFloat(parts[1]);
-    const W = parseFloat(parts[2]);
+    const H = parseFloat(parts[0]);
+    const W = parseFloat(parts[1]);
 
     if (isNaN(H) || isNaN(W)) {
         pendingErrors[mode].push(`Line ${lineIdx + 1}: 2D_PLANE H and W must be numbers, got H='${parts[1]}' W='${parts[2]}'`);
@@ -495,7 +590,8 @@ function parse2DPlaneCommand(
     const twoDPlaneCommand: TwoDPlaneCommand = {
         type: '2D_PLANE',
         H, W,
-        circleGroups, lineGroups, polygonGroups
+        circleGroups, lineGroups, polygonGroups,
+        bounds
     };
 
     pendingCommands[mode].push(twoDPlaneCommand);

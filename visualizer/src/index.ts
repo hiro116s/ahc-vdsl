@@ -1,5 +1,5 @@
 import './styles.css';
-import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand } from './types';
+import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand, CanvasCommand } from './types';
 import { parseStderr } from './parser';
 import { renderGridFromCommand, render2DPlaneFromCommand } from './renderer';
 
@@ -260,6 +260,11 @@ function renderCurrentFrame(): void {
     const frame = frames[currentFrameIndex];
     const commands = frame.commands;
 
+    // Get canvas size from CANVAS command or use default
+    const canvasCmd = commands.find(c => c.type === 'CANVAS') as CanvasCommand | undefined;
+    const canvasW = canvasCmd ? canvasCmd.W : 800;
+    const canvasH = canvasCmd ? canvasCmd.H : 800;
+
     // Display errors if any
     if (frame.errors && frame.errors.length > 0) {
         const errorContainer = document.createElement('div');
@@ -297,9 +302,11 @@ function renderCurrentFrame(): void {
 
     for (const cmd of commands) {
         if (cmd.type === 'GRID') {
-            renderGridFromCommand(canvasDiv, cmd as GridCommand);
+            renderGridFromCommand(canvasDiv, cmd as GridCommand, canvasW, canvasH);
         } else if (cmd.type === '2D_PLANE') {
-            render2DPlaneFromCommand(canvasDiv, cmd as TwoDPlaneCommand);
+            render2DPlaneFromCommand(canvasDiv, cmd as TwoDPlaneCommand, canvasW, canvasH);
+        } else if (cmd.type === 'CANVAS') {
+            // Canvas command is handled above for sizing, no visual rendering needed
         } else if (cmd.type === 'TEXTAREA') {
             const ta = document.createElement('textarea');
             ta.className = 'info-textarea';

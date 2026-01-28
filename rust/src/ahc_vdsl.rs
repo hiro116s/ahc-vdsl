@@ -74,7 +74,29 @@ pub mod ahc_vdsl {
             }
         }
 
+        pub struct VisCanvas {
+            h: f64,
+            w: f64,
+        }
+
+        impl VisCanvas {
+            pub fn new(h: f64, w: f64) -> Self {
+                Self { h, w }
+            }
+
+            pub fn to_vis_string(&self, mode: &str) -> String {
+                format!("$v({}) CANVAS {} {}\n", mode, self.h, self.w)
+            }
+        }
+
+        impl Default for VisCanvas {
+            fn default() -> Self {
+                Self::new(800.0, 800.0)
+            }
+        }
+
         pub struct VisFrame {
+            vis_canvas: Option<VisCanvas>,
             vis_grid: Option<VisGrid>,
             vis_2d_plane: Option<Vis2DPlane>,
             score: String,
@@ -85,6 +107,7 @@ pub mod ahc_vdsl {
         impl VisFrame {
             pub fn new_grid<T: ToString>(grid: VisGrid, score: T) -> Self {
                 Self {
+                    vis_canvas: None,
                     vis_grid: Some(grid),
                     vis_2d_plane: None,
                     score: score.to_string(),
@@ -95,12 +118,17 @@ pub mod ahc_vdsl {
 
             pub fn new_2d_plane<T: ToString>(plane: Vis2DPlane, score: T) -> Self {
                 Self {
+                    vis_canvas: None,
                     vis_grid: None,
                     vis_2d_plane: Some(plane),
                     score: score.to_string(),
                     textarea: Vec::new(),
                     with_debug: false,
                 }
+            }
+
+            pub fn set_canvas(&mut self, canvas: VisCanvas) {
+                self.vis_canvas = Some(canvas);
             }
 
             pub fn set_grid(&mut self, grid: VisGrid) {
@@ -138,6 +166,11 @@ pub mod ahc_vdsl {
             pub fn to_vis_string(&self, mode: &str) -> String {
                 let mut output = String::new();
 
+                // Output canvas if present
+                if let Some(canvas) = &self.vis_canvas {
+                    output.push_str(&canvas.to_vis_string(mode));
+                }
+
                 // Output grid or 2d_plane
                 if let Some(grid) = &self.vis_grid {
                     output.push_str(&grid.to_vis_string(mode));
@@ -169,7 +202,32 @@ pub mod ahc_vdsl {
 
         impl Default for VisFrame {
             fn default() -> Self {
-                Self::new_grid(VisGrid::new(0, 0), "")
+                Self {
+                    vis_canvas: None,
+                    vis_grid: Some(VisGrid::new(0, 0)),
+                    vis_2d_plane: None,
+                    score: String::new(),
+                    textarea: Vec::new(),
+                    with_debug: false,
+                }
+            }
+        }
+
+        pub struct ItemBounds {
+            pub min_x: f64,
+            pub min_y: f64,
+            pub max_x: f64,
+            pub max_y: f64,
+        }
+
+        impl ItemBounds {
+            pub fn new(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> Self {
+                Self {
+                    min_x,
+                    min_y,
+                    max_x,
+                    max_y,
+                }
             }
         }
 
@@ -179,6 +237,7 @@ pub mod ahc_vdsl {
             circle_groups: Vec<CircleGroup>,
             line_groups: Vec<LineGroup>,
             polygon_groups: Vec<PolygonGroup>,
+            bounds: Option<ItemBounds>,
         }
 
         pub struct CircleGroup {
@@ -219,7 +278,23 @@ pub mod ahc_vdsl {
                     circle_groups: Vec::new(),
                     line_groups: Vec::new(),
                     polygon_groups: Vec::new(),
+                    bounds: None,
                 }
+            }
+
+            pub fn with_bounds(h: f64, w: f64, bounds: ItemBounds) -> Self {
+                Self {
+                    h,
+                    w,
+                    circle_groups: Vec::new(),
+                    line_groups: Vec::new(),
+                    polygon_groups: Vec::new(),
+                    bounds: Some(bounds),
+                }
+            }
+
+            pub fn set_bounds(&mut self, bounds: ItemBounds) {
+                self.bounds = Some(bounds);
             }
 
             pub fn add_circle_group(
@@ -270,8 +345,17 @@ pub mod ahc_vdsl {
             pub fn to_vis_string(&self, mode: &str) -> String {
                 let mut s = String::new();
 
-                // Output 2D_PLANE header
-                writeln!(&mut s, "$v({}) 2D_PLANE {} {}", mode, self.h, self.w).unwrap();
+                // Output 2D_PLANE header with optional bounds
+                if let Some(bounds) = &self.bounds {
+                    writeln!(
+                        &mut s,
+                        "$v({}) 2D_PLANE({}, {}, {}, {}) {} {}",
+                        mode, bounds.min_x, bounds.min_y, bounds.max_x, bounds.max_y, self.h, self.w
+                    )
+                    .unwrap();
+                } else {
+                    writeln!(&mut s, "$v({}) 2D_PLANE {} {}", mode, self.h, self.w).unwrap();
+                }
 
                 // Output circles
                 if !self.circle_groups.is_empty() {
@@ -340,6 +424,7 @@ pub mod ahc_vdsl {
             no_wall_vertical_pos: FxHashSet<(usize, usize)>,
             no_wall_horizontal_pos: FxHashSet<(usize, usize)>,
             lines: Vec<(Vec<(usize, usize)>, Color)>,
+            bounds: Option<ItemBounds>,
         }
 
         impl VisGrid {
@@ -353,7 +438,26 @@ pub mod ahc_vdsl {
                     no_wall_vertical_pos: FxHashSet::default(),
                     no_wall_horizontal_pos: FxHashSet::default(),
                     lines: Vec::new(),
+                    bounds: None,
                 }
+            }
+
+            pub fn with_bounds(h: usize, w: usize, bounds: ItemBounds) -> Self {
+                Self {
+                    h,
+                    w,
+                    conf: Default::default(),
+                    cell_colors: vec![vec![WHITE; w]; h],
+                    cell_texts: vec![vec![String::new(); w]; h],
+                    no_wall_vertical_pos: FxHashSet::default(),
+                    no_wall_horizontal_pos: FxHashSet::default(),
+                    lines: Vec::new(),
+                    bounds: Some(bounds),
+                }
+            }
+
+            pub fn set_bounds(&mut self, bounds: ItemBounds) {
+                self.bounds = Some(bounds);
             }
 
             pub fn update_cell_color(&mut self, p: (usize, usize), color: Color) {
@@ -398,18 +502,36 @@ pub mod ahc_vdsl {
             pub fn to_vis_string(&self, mode_name: &str) -> String {
                 let mut s = String::new();
 
-                // G H W BORDER TEXT を書き込み
-                writeln!(
-                    &mut s,
-                    "$v({}) GRID {} {} {} {} {}",
-                    mode_name,
-                    self.h,
-                    self.w,
-                    self.conf.border_color,
-                    self.conf.text_color,
-                    self.conf.default_cell_color
-                )
-                .unwrap();
+                // G H W BORDER TEXT を書き込み (with optional bounds)
+                if let Some(bounds) = &self.bounds {
+                    writeln!(
+                        &mut s,
+                        "$v({}) GRID({}, {}, {}, {}) {} {} {} {} {}",
+                        mode_name,
+                        bounds.min_x,
+                        bounds.min_y,
+                        bounds.max_x,
+                        bounds.max_y,
+                        self.h,
+                        self.w,
+                        self.conf.border_color,
+                        self.conf.text_color,
+                        self.conf.default_cell_color
+                    )
+                    .unwrap();
+                } else {
+                    writeln!(
+                        &mut s,
+                        "$v({}) GRID {} {} {} {} {}",
+                        mode_name,
+                        self.h,
+                        self.w,
+                        self.conf.border_color,
+                        self.conf.text_color,
+                        self.conf.default_cell_color
+                    )
+                    .unwrap();
+                }
 
                 // 各セルの色の位置を書き込み
                 writeln!(&mut s, "CELL_COLORS_POS").unwrap();
@@ -605,6 +727,9 @@ pub mod ahc_vdsl {
             }
 
             #[inline(always)]
+            pub fn set_canvas(&mut self, _canvas: VisCanvas) {}
+
+            #[inline(always)]
             pub fn set_grid(&mut self, _grid: VisGrid) {}
 
             #[inline(always)]
@@ -635,6 +760,38 @@ pub mod ahc_vdsl {
             }
         }
 
+        // ItemBounds - Zero-Sized Type
+        pub struct ItemBounds;
+
+        impl ItemBounds {
+            #[inline(always)]
+            pub fn new(_min_x: f64, _min_y: f64, _max_x: f64, _max_y: f64) -> Self {
+                Self
+            }
+        }
+
+        // VisCanvas - Zero-Sized Type
+        pub struct VisCanvas;
+
+        impl VisCanvas {
+            #[inline(always)]
+            pub fn new(_h: f64, _w: f64) -> Self {
+                Self
+            }
+
+            #[inline(always)]
+            pub fn to_vis_string(&self, _mode: &str) -> String {
+                String::new()
+            }
+        }
+
+        impl Default for VisCanvas {
+            #[inline(always)]
+            fn default() -> Self {
+                Self
+            }
+        }
+
         // Vis2DPlane - Zero-Sized Type
         pub struct Vis2DPlane;
 
@@ -643,6 +800,14 @@ pub mod ahc_vdsl {
             pub fn new(_h: f64, _w: f64) -> Self {
                 Self
             }
+
+            #[inline(always)]
+            pub fn with_bounds(_h: f64, _w: f64, _bounds: ItemBounds) -> Self {
+                Self
+            }
+
+            #[inline(always)]
+            pub fn set_bounds(&mut self, _bounds: ItemBounds) {}
 
             #[inline(always)]
             pub fn add_circle_group(
@@ -693,6 +858,14 @@ pub mod ahc_vdsl {
             pub fn new(_h: usize, _w: usize) -> Self {
                 Self
             }
+
+            #[inline(always)]
+            pub fn with_bounds(_h: usize, _w: usize, _bounds: ItemBounds) -> Self {
+                Self
+            }
+
+            #[inline(always)]
+            pub fn set_bounds(&mut self, _bounds: ItemBounds) {}
 
             #[inline(always)]
             pub fn update_cell_color(&mut self, _p: (usize, usize), _color: Color) {}
