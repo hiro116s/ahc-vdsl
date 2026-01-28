@@ -76,13 +76,13 @@ export function parseStderr(stderrText: string): ParsedModes {
                             const item1 = items[i] as GridCommand | TwoDPlaneCommand;
                             const item2 = items[j] as GridCommand | TwoDPlaneCommand;
 
-                            const bounds1 = item1.bounds || { minX: 0, minY: 0, maxX: canvasW, maxY: canvasH };
-                            const bounds2 = item2.bounds || { minX: 0, minY: 0, maxX: canvasW, maxY: canvasH };
+                            const bounds1 = item1.bounds || { left: 0, top: 0, right: canvasW, bottom: canvasH };
+                            const bounds2 = item2.bounds || { left: 0, top: 0, right: canvasW, bottom: canvasH };
 
                             // Check if rectangles overlap
-                            if (!(bounds1.maxX <= bounds2.minX || bounds2.maxX <= bounds1.minX ||
-                                  bounds1.maxY <= bounds2.minY || bounds2.maxY <= bounds1.minY)) {
-                                pendingErrors[mode].push(`Item overlap detected: Items at positions (${bounds1.minX},${bounds1.minY})-(${bounds1.maxX},${bounds1.maxY}) and (${bounds2.minX},${bounds2.minY})-(${bounds2.maxX},${bounds2.maxY}) overlap.`);
+                            if (!(bounds1.right <= bounds2.left || bounds2.right <= bounds1.left ||
+                                  bounds1.bottom <= bounds2.top || bounds2.bottom <= bounds1.top)) {
+                                pendingErrors[mode].push(`Item overlap detected: Items at positions (${bounds1.left},${bounds1.top})-(${bounds1.right},${bounds1.bottom}) and (${bounds2.left},${bounds2.top})-(${bounds2.right},${bounds2.bottom}) overlap.`);
                             }
                         }
                     }
@@ -192,16 +192,16 @@ function parseBoundsFromCommand(commandStr: string): ItemBounds | undefined {
         return undefined;
     }
 
-    const minX = parseFloat(boundsParts[0]);
-    const minY = parseFloat(boundsParts[1]);
-    const maxX = parseFloat(boundsParts[2]);
-    const maxY = parseFloat(boundsParts[3]);
+    const left = parseFloat(boundsParts[0]);
+    const top = parseFloat(boundsParts[1]);
+    const right = parseFloat(boundsParts[2]);
+    const bottom = parseFloat(boundsParts[3]);
 
-    if (isNaN(minX) || isNaN(minY) || isNaN(maxX) || isNaN(maxY)) {
+    if (isNaN(left) || isNaN(top) || isNaN(right) || isNaN(bottom)) {
         return undefined;
     }
 
-    return { minX, minY, maxX, maxY };
+    return { left, top, right, bottom };
 }
 
 function parseGridCommand(

@@ -15,14 +15,14 @@ export function renderGrid(
     wallHorizontal: string[] = [],
     canvasW: number = 800,
     canvasH: number = 800,
-    minX: number = 0,
-    minY: number = 0,
-    maxX: number = 800,
-    maxY: number = 800
+    left: number = 0,
+    top: number = 0,
+    right: number = 800,
+    bottom: number = 800
 ): void {
     // Calculate the actual drawing area based on bounds
-    const drawWidth = maxX - minX;
-    const drawHeight = maxY - minY;
+    const drawWidth = right - left;
+    const drawHeight = bottom - top;
     const cellWidth = drawWidth / W;
     const cellHeight = drawHeight / H;
 
@@ -36,7 +36,7 @@ export function renderGrid(
 
     // Create a group for this grid item with offset
     const g = document.createElementNS(SVG_NS, "g");
-    g.setAttribute("transform", `translate(${minX}, ${minY})`);
+    g.setAttribute("transform", `translate(${left}, ${top})`);
 
     // Find maximum character count across all cells
     let maxCharCount = 1;
@@ -242,7 +242,7 @@ export function renderGrid(
 }
 
 export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand, canvasW: number = 800, canvasH: number = 800): void {
-    const bounds = cmd.bounds || { minX: 0, minY: 0, maxX: canvasW, maxY: canvasH };
+    const bounds = cmd.bounds || { left: 0, top: 0, right: canvasW, bottom: canvasH };
     renderGrid(
         container,
         cmd.H,
@@ -256,10 +256,10 @@ export function renderGridFromCommand(container: HTMLElement, cmd: GridCommand, 
         cmd.wallHorizontal,
         canvasW,
         canvasH,
-        bounds.minX,
-        bounds.minY,
-        bounds.maxX,
-        bounds.maxY
+        bounds.left,
+        bounds.top,
+        bounds.right,
+        bounds.bottom
     );
 }
 
@@ -272,14 +272,14 @@ export function render2DPlane(
     polygonGroups: PolygonGroup[],
     canvasW: number = 800,
     canvasH: number = 800,
-    minX: number = 0,
-    minY: number = 0,
-    maxX: number = 800,
-    maxY: number = 800
+    left: number = 0,
+    top: number = 0,
+    right: number = 800,
+    bottom: number = 800
 ): void {
     // Calculate the actual drawing area based on bounds
-    const drawWidth = maxX - minX;
-    const drawHeight = maxY - minY;
+    const drawWidth = right - left;
+    const drawHeight = bottom - top;
 
     const svg = document.createElementNS(SVG_NS, "svg");
     svg.setAttribute("width", String(canvasW));
@@ -291,7 +291,7 @@ export function render2DPlane(
 
     // Create a group for this 2D plane item with offset
     const g = document.createElementNS(SVG_NS, "g");
-    g.setAttribute("transform", `translate(${minX}, ${minY})`);
+    g.setAttribute("transform", `translate(${left}, ${top})`);
 
     // Add a white background
     const background = document.createElementNS(SVG_NS, "rect");
@@ -378,7 +378,7 @@ export function render2DPlane(
 }
 
 export function render2DPlaneFromCommand(container: HTMLElement, cmd: TwoDPlaneCommand, canvasW: number = 800, canvasH: number = 800): void {
-    const bounds = cmd.bounds || { minX: 0, minY: 0, maxX: canvasW, maxY: canvasH };
+    const bounds = cmd.bounds || { left: 0, top: 0, right: canvasW, bottom: canvasH };
     render2DPlane(
         container,
         cmd.H,
@@ -388,9 +388,9 @@ export function render2DPlaneFromCommand(container: HTMLElement, cmd: TwoDPlaneC
         cmd.polygonGroups,
         canvasW,
         canvasH,
-        bounds.minX,
-        bounds.minY,
-        bounds.maxX,
-        bounds.maxY
+        bounds.left,
+        bounds.top,
+        bounds.right,
+        bounds.bottom
     );
 }

@@ -59,14 +59,14 @@ $v(MODE) GRID [H] [W] [BORDER_COLOR] [TEXT_COLOR] [DEFAULT_CELL_COLOR]
 
 **キャンバス内の位置指定（オプション）:**
 ```text
-$v(MODE) GRID(min_x, min_y, max_x, max_y) [H] [W] [BORDER_COLOR] [TEXT_COLOR] [DEFAULT_CELL_COLOR]
+$v(MODE) GRID(left, top, right, bottom) [H] [W] [BORDER_COLOR] [TEXT_COLOR] [DEFAULT_CELL_COLOR]
 ```
 - `H`: 行数
 - `W`: 列数
 - `BORDER_COLOR`: グリッド線の色（例: `#000000`, `black`）
 - `TEXT_COLOR`: 文字色
 - `DEFAULT_CELL_COLOR`: デフォルトの背景色
-- `min_x, min_y, max_x, max_y` (オプション): キャンバス内での相対的な位置を指定します。省略した場合はキャンバス全体に描画されます。
+- `left, top, right, bottom` (オプション): キャンバス内での相対的な位置を指定します。省略した場合はキャンバス全体に描画されます。
 
 この行の直後に、以下のセクションヘッダを使用して詳細データを記述します（ここは `$v` プレフィックス無し）。
 
@@ -126,11 +126,11 @@ $v(MODE) 2D_PLANE [H] [W]
 
 **キャンバス内の位置指定（オプション）:**
 ```text
-$v(MODE) 2D_PLANE(min_x, min_y, max_x, max_y) [H] [W]
+$v(MODE) 2D_PLANE(left, top, right, bottom) [H] [W]
 ```
 - `H`: 縦方向の座標最大値
 - `W`: 横方向の座標最大値
-- `min_x, min_y, max_x, max_y` (オプション): キャンバス内での相対的な位置を指定します。省略した場合はキャンバス全体に描画されます。
+- `left, top, right, bottom` (オプション): キャンバス内での相対的な位置を指定します。省略した場合はキャンバス全体に描画されます。
 
 この行の直後に、以下のセクションヘッダを使用して詳細データを記述します（ここは `$v` プレフィックス無し）。
 

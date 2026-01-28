@@ -102,7 +102,7 @@ g++ -std=c++17 -O2 main.cpp -o main
 - `std::string to_vis_string(const std::string& mode)` - コマンド文字列を生成
 
 ### ItemBounds
-- `ItemBounds(double min_x, double min_y, double max_x, double max_y)` - キャンバス内での位置を指定
+- `ItemBounds(double left, double top, double right, double bottom)` - キャンバス内での位置を指定
 
 ### VisGrid
 - `VisGrid(int h, int w)` - グリッドを作成

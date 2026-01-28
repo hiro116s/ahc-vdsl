@@ -11,10 +11,10 @@ export interface GridLine {
 }
 
 export interface ItemBounds {
-    minX: number;
-    minY: number;
-    maxX: number;
-    maxY: number;
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
 }
 
 export interface GridCommand {

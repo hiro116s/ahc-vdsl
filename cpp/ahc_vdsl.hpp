@@ -51,10 +51,10 @@ constexpr Color CYAN(0, 255, 255);
 constexpr Color MAGENTA(255, 0, 255);
 
 struct ItemBounds {
-    double min_x, min_y, max_x, max_y;
+    double left, top, right, bottom;
 
-    ItemBounds(double min_x = 0, double min_y = 0, double max_x = 800, double max_y = 800)
-        : min_x(min_x), min_y(min_y), max_x(max_x), max_y(max_y) {}
+    ItemBounds(double left = 0, double top = 0, double right = 800, double bottom = 800)
+        : left(left), top(top), right(right), bottom(bottom) {}
 };
 
 struct VisGridConf {
@@ -169,8 +169,8 @@ public:
         // GRID header with optional bounds
         if (bounds) {
             ss << "$v(" << mode_name << ") GRID("
-               << bounds->min_x << ", " << bounds->min_y << ", "
-               << bounds->max_x << ", " << bounds->max_y << ") "
+               << bounds->left << ", " << bounds->top << ", "
+               << bounds->right << ", " << bounds->bottom << ") "
                << h << " " << w << " "
                << conf.border_color.to_string() << " "
                << conf.text_color.to_string() << " "
@@ -326,8 +326,8 @@ public:
         // 2D_PLANE header with optional bounds
         if (bounds) {
             ss << "$v(" << mode << ") 2D_PLANE("
-               << bounds->min_x << ", " << bounds->min_y << ", "
-               << bounds->max_x << ", " << bounds->max_y << ") "
+               << bounds->left << ", " << bounds->top << ", "
+               << bounds->right << ", " << bounds->bottom << ") "
                << h << " " << w << "\n";
         } else {
             ss << "$v(" << mode << ") 2D_PLANE " << h << " " << w << "\n";

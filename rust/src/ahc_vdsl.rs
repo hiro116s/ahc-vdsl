@@ -214,19 +214,19 @@ pub mod ahc_vdsl {
         }
 
         pub struct ItemBounds {
-            pub min_x: f64,
-            pub min_y: f64,
-            pub max_x: f64,
-            pub max_y: f64,
+            pub left: f64,
+            pub top: f64,
+            pub right: f64,
+            pub bottom: f64,
         }
 
         impl ItemBounds {
-            pub fn new(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> Self {
+            pub fn new(left: f64, top: f64, right: f64, bottom: f64) -> Self {
                 Self {
-                    min_x,
-                    min_y,
-                    max_x,
-                    max_y,
+                    left,
+                    top,
+                    right,
+                    bottom,
                 }
             }
         }
@@ -350,7 +350,7 @@ pub mod ahc_vdsl {
                     writeln!(
                         &mut s,
                         "$v({}) 2D_PLANE({}, {}, {}, {}) {} {}",
-                        mode, bounds.min_x, bounds.min_y, bounds.max_x, bounds.max_y, self.h, self.w
+                        mode, bounds.left, bounds.top, bounds.right, bounds.bottom, self.h, self.w
                     )
                     .unwrap();
                 } else {
@@ -508,10 +508,10 @@ pub mod ahc_vdsl {
                         &mut s,
                         "$v({}) GRID({}, {}, {}, {}) {} {} {} {} {}",
                         mode_name,
-                        bounds.min_x,
-                        bounds.min_y,
-                        bounds.max_x,
-                        bounds.max_y,
+                        bounds.left,
+                        bounds.top,
+                        bounds.right,
+                        bounds.bottom,
                         self.h,
                         self.w,
                         self.conf.border_color,
@@ -765,7 +765,7 @@ pub mod ahc_vdsl {
 
         impl ItemBounds {
             #[inline(always)]
-            pub fn new(_min_x: f64, _min_y: f64, _max_x: f64, _max_y: f64) -> Self {
+            pub fn new(_left: f64, _top: f64, _right: f64, _bottom: f64) -> Self {
                 Self
             }
         }
