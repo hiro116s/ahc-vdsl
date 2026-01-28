@@ -97,8 +97,17 @@ g++ -std=c++17 -O2 main.cpp -o main
 - `void add_frame(const std::string& mode, const VisFrame& frame)`
 - `void output_all()`
 
+### VisCanvas
+- `VisCanvas(double h = 800, double w = 800)` - キャンバスを作成
+- `std::string to_vis_string(const std::string& mode)` - コマンド文字列を生成
+
+### ItemBounds
+- `ItemBounds(double left, double top, double right, double bottom)` - キャンバス内での位置を指定
+
 ### VisGrid
-- `VisGrid(int h, int w)`
+- `VisGrid(int h, int w)` - グリッドを作成
+- `VisGrid(int h, int w, ItemBounds bounds)` - 位置を指定してグリッドを作成
+- `void set_bounds(const ItemBounds& bounds)` - 位置を設定
 - `void update_cell_color(int y, int x, Color color)`
 - `void add_line(const std::vector<std::pair<int, int>>& line, Color color)`
 - `void remove_wall_vertical(int y, int x)`
@@ -106,7 +115,9 @@ g++ -std=c++17 -O2 main.cpp -o main
 - `static VisGrid from_cells(const std::vector<std::vector<T>>& cells)`
 
 ### Vis2DPlane
-- `Vis2DPlane(double h, double w)`
+- `Vis2DPlane(double h, double w)` - 2D平面を作成
+- `Vis2DPlane(double h, double w, const ItemBounds& bounds)` - 位置を指定して2D平面を作成
+- `void set_bounds(const ItemBounds& bounds)` - 位置を設定
 - `void add_circle(Color stroke, Color fill, double x, double y, double r)`
 - `void add_line(Color color, double ax, double ay, double bx, double by)`
 - `void add_polygon(Color stroke, Color fill, const std::vector<std::pair<double, double>>& vertices)`
@@ -114,6 +125,7 @@ g++ -std=c++17 -O2 main.cpp -o main
 ### VisFrame
 - `static VisFrame new_grid(const VisGrid& grid, const std::string& score)`
 - `static VisFrame new_2d_plane(const Vis2DPlane& plane, const std::string& score)`
+- `void set_canvas(const VisCanvas& canvas)` - キャンバスを設定
 - `void add_textarea(const std::string& text)`
 - `void enable_debug()`
 

@@ -50,6 +50,13 @@ constexpr Color YELLOW(255, 255, 0);
 constexpr Color CYAN(0, 255, 255);
 constexpr Color MAGENTA(255, 0, 255);
 
+struct ItemBounds {
+    double left, top, right, bottom;
+
+    ItemBounds(double left = 0, double top = 0, double right = 800, double bottom = 800)
+        : left(left), top(top), right(right), bottom(bottom) {}
+};
+
 struct VisGridConf {
     Color border_color;
     Color text_color;
@@ -67,12 +74,55 @@ class VisGrid {
     std::set<std::pair<int, int>> no_wall_vertical_pos;
     std::set<std::pair<int, int>> no_wall_horizontal_pos;
     std::vector<std::pair<std::vector<std::pair<int, int>>, Color>> lines;
+    ItemBounds* bounds;
 
 public:
     VisGrid(int h, int w, VisGridConf conf = VisGridConf())
         : h(h), w(w), conf(conf),
           cell_colors(h, std::vector<Color>(w, WHITE)),
-          cell_texts(h, std::vector<std::string>(w, "")) {}
+          cell_texts(h, std::vector<std::string>(w, "")),
+          bounds(nullptr) {}
+
+    VisGrid(int h, int w, ItemBounds bounds, VisGridConf conf = VisGridConf())
+        : h(h), w(w), conf(conf),
+          cell_colors(h, std::vector<Color>(w, WHITE)),
+          cell_texts(h, std::vector<std::string>(w, "")),
+          bounds(new ItemBounds(bounds)) {}
+
+    ~VisGrid() {
+        delete bounds;
+    }
+
+    // Copy constructor
+    VisGrid(const VisGrid& other)
+        : h(other.h), w(other.w), conf(other.conf),
+          cell_colors(other.cell_colors), cell_texts(other.cell_texts),
+          no_wall_vertical_pos(other.no_wall_vertical_pos),
+          no_wall_horizontal_pos(other.no_wall_horizontal_pos),
+          lines(other.lines),
+          bounds(other.bounds ? new ItemBounds(*other.bounds) : nullptr) {}
+
+    // Assignment operator
+    VisGrid& operator=(const VisGrid& other) {
+        if (this != &other) {
+            h = other.h;
+            w = other.w;
+            conf = other.conf;
+            cell_colors = other.cell_colors;
+            cell_texts = other.cell_texts;
+            no_wall_vertical_pos = other.no_wall_vertical_pos;
+            no_wall_horizontal_pos = other.no_wall_horizontal_pos;
+            lines = other.lines;
+            delete bounds;
+            bounds = other.bounds ? new ItemBounds(*other.bounds) : nullptr;
+        }
+        return *this;
+    }
+
+    void set_bounds(const ItemBounds& b) {
+        delete bounds;
+        bounds = new ItemBounds(b);
+    }
 
     void update_cell_color(int y, int x, Color color) {
         cell_colors[y][x] = color;
@@ -116,11 +166,21 @@ public:
     std::string to_vis_string(const std::string& mode_name) const {
         std::ostringstream ss;
 
-        // GRID header
-        ss << "$v(" << mode_name << ") GRID " << h << " " << w << " "
-           << conf.border_color.to_string() << " "
-           << conf.text_color.to_string() << " "
-           << conf.default_cell_color.to_string() << "\n";
+        // GRID header with optional bounds
+        if (bounds) {
+            ss << "$v(" << mode_name << ") GRID("
+               << bounds->left << ", " << bounds->top << ", "
+               << bounds->right << ", " << bounds->bottom << ") "
+               << h << " " << w << " "
+               << conf.border_color.to_string() << " "
+               << conf.text_color.to_string() << " "
+               << conf.default_cell_color.to_string() << "\n";
+        } else {
+            ss << "$v(" << mode_name << ") GRID " << h << " " << w << " "
+               << conf.border_color.to_string() << " "
+               << conf.text_color.to_string() << " "
+               << conf.default_cell_color.to_string() << "\n";
+        }
 
         // CELL_COLORS_POS
         ss << "CELL_COLORS_POS\n";
@@ -208,9 +268,44 @@ class Vis2DPlane {
     std::vector<CircleGroup> circle_groups;
     std::vector<LineGroup> line_groups;
     std::vector<PolygonGroup> polygon_groups;
+    ItemBounds* bounds;
 
 public:
-    Vis2DPlane(double h, double w) : h(h), w(w) {}
+    Vis2DPlane(double h, double w) : h(h), w(w), bounds(nullptr) {}
+
+    Vis2DPlane(double h, double w, const ItemBounds& b)
+        : h(h), w(w), bounds(new ItemBounds(b)) {}
+
+    ~Vis2DPlane() {
+        delete bounds;
+    }
+
+    // Copy constructor
+    Vis2DPlane(const Vis2DPlane& other)
+        : h(other.h), w(other.w),
+          circle_groups(other.circle_groups),
+          line_groups(other.line_groups),
+          polygon_groups(other.polygon_groups),
+          bounds(other.bounds ? new ItemBounds(*other.bounds) : nullptr) {}
+
+    // Assignment operator
+    Vis2DPlane& operator=(const Vis2DPlane& other) {
+        if (this != &other) {
+            h = other.h;
+            w = other.w;
+            circle_groups = other.circle_groups;
+            line_groups = other.line_groups;
+            polygon_groups = other.polygon_groups;
+            delete bounds;
+            bounds = other.bounds ? new ItemBounds(*other.bounds) : nullptr;
+        }
+        return *this;
+    }
+
+    void set_bounds(const ItemBounds& b) {
+        delete bounds;
+        bounds = new ItemBounds(b);
+    }
 
     void add_circle(Color stroke_color, Color fill_color, double x, double y, double r) {
         circle_groups.push_back({stroke_color, fill_color, {{x, y, r}}});
@@ -228,7 +323,15 @@ public:
     std::string to_vis_string(const std::string& mode) const {
         std::ostringstream ss;
 
-        ss << "$v(" << mode << ") 2D_PLANE " << h << " " << w << "\n";
+        // 2D_PLANE header with optional bounds
+        if (bounds) {
+            ss << "$v(" << mode << ") 2D_PLANE("
+               << bounds->left << ", " << bounds->top << ", "
+               << bounds->right << ", " << bounds->bottom << ") "
+               << h << " " << w << "\n";
+        } else {
+            ss << "$v(" << mode << ") 2D_PLANE " << h << " " << w << "\n";
+        }
 
         // CIRCLES
         if (!circle_groups.empty()) {
@@ -277,53 +380,140 @@ public:
     }
 };
 
+class VisCanvas {
+    double h, w;
+
+public:
+    VisCanvas(double h = 800, double w = 800) : h(h), w(w) {}
+
+    std::string to_vis_string(const std::string& mode) const {
+        std::ostringstream ss;
+        ss << "$v(" << mode << ") CANVAS " << h << " " << w << "\n";
+        return ss.str();
+    }
+};
+
+class VisItem {
+public:
+    enum Type { GRID, PLANE };
+
+private:
+    Type type;
+    union {
+        VisGrid* grid;
+        Vis2DPlane* plane;
+    };
+
+public:
+    VisItem(const VisGrid& g) : type(GRID), grid(new VisGrid(g)) {}
+    VisItem(const Vis2DPlane& p) : type(PLANE), plane(new Vis2DPlane(p)) {}
+
+    ~VisItem() {
+        if (type == GRID) {
+            delete grid;
+        } else {
+            delete plane;
+        }
+    }
+
+    // Copy constructor
+    VisItem(const VisItem& other) : type(other.type) {
+        if (type == GRID) {
+            grid = new VisGrid(*other.grid);
+        } else {
+            plane = new Vis2DPlane(*other.plane);
+        }
+    }
+
+    // Assignment operator
+    VisItem& operator=(const VisItem& other) {
+        if (this != &other) {
+            if (type == GRID) {
+                delete grid;
+            } else {
+                delete plane;
+            }
+            type = other.type;
+            if (type == GRID) {
+                grid = new VisGrid(*other.grid);
+            } else {
+                plane = new Vis2DPlane(*other.plane);
+            }
+        }
+        return *this;
+    }
+
+    std::string to_vis_string(const std::string& mode) const {
+        if (type == GRID) {
+            return grid->to_vis_string(mode);
+        } else {
+            return plane->to_vis_string(mode);
+        }
+    }
+};
+
 class VisFrame {
-    VisGrid* vis_grid;
-    Vis2DPlane* vis_2d_plane;
+    VisCanvas* vis_canvas;
+    std::vector<VisItem> items;
     std::string score;
     std::vector<std::string> textarea;
     bool with_debug;
 
 public:
-    VisFrame() : vis_grid(nullptr), vis_2d_plane(nullptr), with_debug(false) {}
+    VisFrame() : vis_canvas(nullptr), with_debug(false) {}
 
     static VisFrame new_grid(const VisGrid& grid, const std::string& score) {
         VisFrame frame;
-        frame.vis_grid = new VisGrid(grid);
+        frame.items.push_back(VisItem(grid));
         frame.score = score;
         return frame;
     }
 
     static VisFrame new_2d_plane(const Vis2DPlane& plane, const std::string& score) {
         VisFrame frame;
-        frame.vis_2d_plane = new Vis2DPlane(plane);
+        frame.items.push_back(VisItem(plane));
         frame.score = score;
         return frame;
     }
 
     ~VisFrame() {
-        delete vis_grid;
-        delete vis_2d_plane;
+        delete vis_canvas;
     }
 
-    VisFrame(const VisFrame& other) 
-        : vis_grid(other.vis_grid ? new VisGrid(*other.vis_grid) : nullptr),
-          vis_2d_plane(other.vis_2d_plane ? new Vis2DPlane(*other.vis_2d_plane) : nullptr),
+    VisFrame(const VisFrame& other)
+        : vis_canvas(other.vis_canvas ? new VisCanvas(*other.vis_canvas) : nullptr),
+          items(other.items),
           score(other.score),
           textarea(other.textarea),
           with_debug(other.with_debug) {}
 
     VisFrame& operator=(const VisFrame& other) {
         if (this != &other) {
-            delete vis_grid;
-            delete vis_2d_plane;
-            vis_grid = other.vis_grid ? new VisGrid(*other.vis_grid) : nullptr;
-            vis_2d_plane = other.vis_2d_plane ? new Vis2DPlane(*other.vis_2d_plane) : nullptr;
+            delete vis_canvas;
+            vis_canvas = other.vis_canvas ? new VisCanvas(*other.vis_canvas) : nullptr;
+            items = other.items;
             score = other.score;
             textarea = other.textarea;
             with_debug = other.with_debug;
         }
         return *this;
+    }
+
+    void set_canvas(const VisCanvas& canvas) {
+        delete vis_canvas;
+        vis_canvas = new VisCanvas(canvas);
+    }
+
+    void add_grid(const VisGrid& grid) {
+        items.push_back(VisItem(grid));
+    }
+
+    void add_2d_plane(const Vis2DPlane& plane) {
+        items.push_back(VisItem(plane));
+    }
+
+    void add_item(const VisItem& item) {
+        items.push_back(item);
     }
 
     void add_textarea(const std::string& text) {
@@ -341,11 +531,14 @@ public:
     std::string to_vis_string(const std::string& mode) const {
         std::ostringstream ss;
 
-        // Output grid or 2d_plane
-        if (vis_grid) {
-            ss << vis_grid->to_vis_string(mode);
-        } else if (vis_2d_plane) {
-            ss << vis_2d_plane->to_vis_string(mode);
+        // Output canvas if present
+        if (vis_canvas) {
+            ss << vis_canvas->to_vis_string(mode);
+        }
+
+        // Output all items
+        for (const auto& item : items) {
+            ss << item.to_vis_string(mode);
         }
 
         // SCORE
@@ -445,6 +638,10 @@ constexpr Color YELLOW;
 constexpr Color CYAN;
 constexpr Color MAGENTA;
 
+struct ItemBounds {
+    ItemBounds(double = 0, double = 0, double = 800, double = 800) {}
+};
+
 struct VisGridConf {
     VisGridConf(Color = BLACK, Color = BLACK, Color = WHITE) {}
 };
@@ -452,12 +649,14 @@ struct VisGridConf {
 class VisGrid {
 public:
     VisGrid(int = 0, int = 0, VisGridConf = VisGridConf()) {}
+    VisGrid(int, int, ItemBounds, VisGridConf = VisGridConf()) {}
     void update_cell_color(int, int, Color) {}
     void add_line(const std::vector<std::pair<int, int>>&, Color) {}
     void remove_wall_vertical(int, int) {}
     void add_wall_vertical(int, int) {}
     void remove_wall_horizontal(int, int) {}
     void add_wall_horizontal(int, int) {}
+    void set_bounds(const ItemBounds&) {}
 
     template<typename T>
     static VisGrid from_cells(const std::vector<std::vector<T>>&) {
@@ -470,9 +669,24 @@ public:
 class Vis2DPlane {
 public:
     Vis2DPlane(double = 0, double = 0) {}
+    Vis2DPlane(double, double, const ItemBounds&) {}
     void add_circle(Color, Color, double, double, double) {}
     void add_line(Color, double, double, double, double) {}
     void add_polygon(Color, Color, const std::vector<std::pair<double, double>>&) {}
+    void set_bounds(const ItemBounds&) {}
+    std::string to_vis_string(const std::string&) const { return ""; }
+};
+
+class VisCanvas {
+public:
+    VisCanvas(double = 800, double = 800) {}
+    std::string to_vis_string(const std::string&) const { return ""; }
+};
+
+class VisItem {
+public:
+    VisItem(const VisGrid&) {}
+    VisItem(const Vis2DPlane&) {}
     std::string to_vis_string(const std::string&) const { return ""; }
 };
 
@@ -481,6 +695,10 @@ public:
     VisFrame() {}
     static VisFrame new_grid(const VisGrid&, const std::string&) { return VisFrame(); }
     static VisFrame new_2d_plane(const Vis2DPlane&, const std::string&) { return VisFrame(); }
+    void set_canvas(const VisCanvas&) {}
+    void add_grid(const VisGrid&) {}
+    void add_2d_plane(const Vis2DPlane&) {}
+    void add_item(const VisItem&) {}
     void add_textarea(const std::string&) {}
     void enable_debug() {}
     void disable_debug() {}

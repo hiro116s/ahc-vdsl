@@ -25,6 +25,19 @@ $v(main) GRID ...
 $v(sub) TEXTAREA ...
 ```
 
+### 0. キャンバス設定: `$v(MODE) CANVAS`
+
+キャンバスのサイズを指定します。このコマンドを使用しない場合、デフォルトで800x800のキャンバスが使用されます。
+
+**基本構文:**
+```text
+$v(MODE) CANVAS [H] [W]
+```
+- `H`: キャンバスの高さ
+- `W`: キャンバスの幅
+
+CANVASコマンドを使用することで、複数のItem（GRID、2D_PLANE）を同一のキャンバス内に配置することができます。
+
 ### 1. フレーム区切り: `$v(MODE) COMMIT`
 
 現在のフレームの描画コマンドを確定し、次のフレームへ移行します。
@@ -43,11 +56,17 @@ $v(MODE) COMMIT
 ```text
 $v(MODE) GRID [H] [W] [BORDER_COLOR] [TEXT_COLOR] [DEFAULT_CELL_COLOR]
 ```
+
+**キャンバス内の位置指定（オプション）:**
+```text
+$v(MODE) GRID(left, top, right, bottom) [H] [W] [BORDER_COLOR] [TEXT_COLOR] [DEFAULT_CELL_COLOR]
+```
 - `H`: 行数
 - `W`: 列数
 - `BORDER_COLOR`: グリッド線の色（例: `#000000`, `black`）
 - `TEXT_COLOR`: 文字色
 - `DEFAULT_CELL_COLOR`: デフォルトの背景色
+- `left, top, right, bottom` (オプション): キャンバス内での相対的な位置を指定します。省略した場合はキャンバス全体に描画されます。
 
 この行の直後に、以下のセクションヘッダを使用して詳細データを記述します（ここは `$v` プレフィックス無し）。
 
@@ -104,12 +123,18 @@ LINES
 ```text
 $v(MODE) 2D_PLANE [H] [W]
 ```
+
+**キャンバス内の位置指定（オプション）:**
+```text
+$v(MODE) 2D_PLANE(left, top, right, bottom) [H] [W]
+```
 - `H`: 縦方向の座標最大値
 - `W`: 横方向の座標最大値
+- `left, top, right, bottom` (オプション): キャンバス内での相対的な位置を指定します。省略した場合はキャンバス全体に描画されます。
 
 この行の直後に、以下のセクションヘッダを使用して詳細データを記述します（ここは `$v` プレフィックス無し）。
 
-座標 (x, y) は、画面上で `x / W * window_width`, `y / H * window_height` の位置に投影されます。
+座標 (x, y) は、指定された描画領域内で `x / W * draw_width`, `y / H * draw_height` の位置に投影されます。
 
 #### A. 円描画: `CIRCLES`
 
@@ -150,7 +175,18 @@ POLYGONS
 ```
 - 各多角形は、指定された頂点を結んで閉じた図形を描画します（最初の点と最後の点が自動的に結ばれます）
 
-**注意:** `GRID` コマンドと `2D_PLANE` コマンドは同一フレーム（同一モード）内で同時に使用できません。両方が指定された場合、先に指定された方のみが表示され、エラーメッセージが表示されます。
+**Item（GRID・2D_PLANE）の複数配置について:**
+
+CANVASコマンドと位置指定を使用することで、複数のGRIDや2D_PLANEを同一フレーム内に配置できます。
+ただし、Itemが重なっている場合はエラーが表示されます。
+
+例:
+```text
+$v(main) CANVAS 800 800
+$v(main) GRID(0, 0, 400, 400) 10 10 #ddd black white
+$v(main) 2D_PLANE(400, 0, 800, 400) 100 100
+$v(main) COMMIT
+```
 
 ### 4. 情報パネル (テキストエリア): `$v(MODE) TEXTAREA`
 

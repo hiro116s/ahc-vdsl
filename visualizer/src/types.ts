@@ -10,6 +10,13 @@ export interface GridLine {
     points: Point[];
 }
 
+export interface ItemBounds {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+}
+
 export interface GridCommand {
     type: 'GRID';
     H: number;
@@ -21,6 +28,7 @@ export interface GridCommand {
     gridLines: GridLine[];
     wallVertical: string[];
     wallHorizontal: string[];
+    bounds?: ItemBounds; // Optional bounds within canvas
 }
 
 export interface TextAreaCommand {
@@ -78,9 +86,16 @@ export interface TwoDPlaneCommand {
     circleGroups: CircleGroup[];
     lineGroups: LineGroup[];
     polygonGroups: PolygonGroup[];
+    bounds?: ItemBounds; // Optional bounds within canvas
 }
 
-export type Command = GridCommand | TextAreaCommand | ScoreCommand | DebugCommand | TwoDPlaneCommand;
+export interface CanvasCommand {
+    type: 'CANVAS';
+    H: number;
+    W: number;
+}
+
+export type Command = CanvasCommand | GridCommand | TextAreaCommand | ScoreCommand | DebugCommand | TwoDPlaneCommand;
 
 export interface Frame {
     commands: Command[];
