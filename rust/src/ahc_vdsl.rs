@@ -128,26 +128,6 @@ pub mod ahc_vdsl {
                 }
             }
 
-            pub fn new_grid<T: ToString>(grid: VisGrid, score: T) -> Self {
-                Self {
-                    vis_canvas: None,
-                    items: vec![VisItem::Grid(grid)],
-                    score: score.to_string(),
-                    textarea: Vec::new(),
-                    with_debug: false,
-                }
-            }
-
-            pub fn new_2d_plane<T: ToString>(plane: Vis2DPlane, score: T) -> Self {
-                Self {
-                    vis_canvas: None,
-                    items: vec![VisItem::Plane(plane)],
-                    score: score.to_string(),
-                    textarea: Vec::new(),
-                    with_debug: false,
-                }
-            }
-
             pub fn set_canvas(&mut self, canvas: VisCanvas) {
                 self.vis_canvas = Some(canvas);
             }
@@ -279,25 +259,14 @@ pub mod ahc_vdsl {
         }
 
         impl Vis2DPlane {
-            pub fn new(h: f64, w: f64) -> Self {
+            pub fn new(h: f64, w: f64, bounds: Option<ItemBounds>) -> Self {
                 Self {
                     h,
                     w,
                     circle_groups: Vec::new(),
                     line_groups: Vec::new(),
                     polygon_groups: Vec::new(),
-                    bounds: None,
-                }
-            }
-
-            pub fn with_bounds(h: f64, w: f64, bounds: ItemBounds) -> Self {
-                Self {
-                    h,
-                    w,
-                    circle_groups: Vec::new(),
-                    line_groups: Vec::new(),
-                    polygon_groups: Vec::new(),
-                    bounds: Some(bounds),
+                    bounds,
                 }
             }
 
@@ -436,7 +405,7 @@ pub mod ahc_vdsl {
         }
 
         impl VisGrid {
-            pub fn new(h: usize, w: usize) -> Self {
+            pub fn new(h: usize, w: usize, bounds: Option<ItemBounds>) -> Self {
                 Self {
                     h,
                     w,
@@ -446,21 +415,7 @@ pub mod ahc_vdsl {
                     no_wall_vertical_pos: FxHashSet::default(),
                     no_wall_horizontal_pos: FxHashSet::default(),
                     lines: Vec::new(),
-                    bounds: None,
-                }
-            }
-
-            pub fn with_bounds(h: usize, w: usize, bounds: ItemBounds) -> Self {
-                Self {
-                    h,
-                    w,
-                    conf: Default::default(),
-                    cell_colors: vec![vec![WHITE; w]; h],
-                    cell_texts: vec![vec![String::new(); w]; h],
-                    no_wall_vertical_pos: FxHashSet::default(),
-                    no_wall_horizontal_pos: FxHashSet::default(),
-                    lines: Vec::new(),
-                    bounds: Some(bounds),
+                    bounds,
                 }
             }
 
@@ -494,21 +449,6 @@ pub mod ahc_vdsl {
 
             pub fn add_wall_horizontal(&mut self, p: (usize, usize)) {
                 self.no_wall_horizontal_pos.remove(&p);
-            }
-
-            pub fn from_cells<T>(cell_texts: &[Vec<T>]) -> Self
-            where
-                T: ToString,
-            {
-                let h = cell_texts.len();
-                let w = cell_texts[0].len();
-                let mut vis_grid = Self::new(h, w);
-                for i in 0..h {
-                    for j in 0..w {
-                        vis_grid.cell_texts[i][j] = cell_texts[i][j].to_string();
-                    }
-                }
-                vis_grid
             }
 
             pub fn to_vis_string(&self, mode_name: &str) -> String {
@@ -840,7 +780,7 @@ pub mod ahc_vdsl {
 
         impl Vis2DPlane {
             #[inline(always)]
-            pub fn new(_h: f64, _w: f64) -> Self {
+            pub fn new(_h: f64, _w: f64, _bounds: Option<ItemBounds>) -> Self {
                 Self
             }
 
@@ -898,7 +838,7 @@ pub mod ahc_vdsl {
 
         impl VisGrid {
             #[inline(always)]
-            pub fn new(_h: usize, _w: usize) -> Self {
+            pub fn new(_h: usize, _w: usize, _bounds: Option<ItemBounds>) -> Self {
                 Self
             }
 
@@ -912,6 +852,9 @@ pub mod ahc_vdsl {
 
             #[inline(always)]
             pub fn update_cell_color(&mut self, _p: (usize, usize), _color: Color) {}
+
+            #[inline(always)]
+            pub fn update_text(&mut self, _p: (usize, usize), _text: String) {}
 
             #[inline(always)]
             pub fn add_line(&mut self, _line: Vec<(usize, usize)>, _color: Color) {}
@@ -975,6 +918,13 @@ pub mod ahc_vdsl {
         impl Color {
             #[inline(always)]
             pub const fn new(_r: u8, _g: u8, _b: u8) -> Self {
+                Self
+            }
+        }
+
+        impl From<&String> for Color {
+            #[inline(always)]
+            fn from(_hex: &String) -> Self {
                 Self
             }
         }
