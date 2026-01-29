@@ -472,6 +472,10 @@ pub mod ahc_vdsl {
                 self.cell_colors[p.1][p.0] = color;
             }
 
+            pub fn update_text(&mut self, p: (usize, usize), text: String) {
+                self.cell_texts[p.1][p.0] = text;
+            }
+
             pub fn add_line(&mut self, line: Vec<(usize, usize)>, color: Color) {
                 self.lines.push((line, color));
             }
@@ -630,6 +634,16 @@ pub mod ahc_vdsl {
         impl Display for Color {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, "#{:02X}{:02X}{:02X}", self.r, self.g, self.b)
+            }
+        }
+
+        impl From<&String> for Color {
+            fn from(s: &String) -> Self {
+                let s = s.trim_start_matches('#');
+                let r = u8::from_str_radix(&s[0..2], 16).unwrap_or(0);
+                let g = u8::from_str_radix(&s[2..4], 16).unwrap_or(0);
+                let b = u8::from_str_radix(&s[4..6], 16).unwrap_or(0);
+                Color::new(r, g, b)
             }
         }
 
