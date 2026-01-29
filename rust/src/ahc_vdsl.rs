@@ -504,7 +504,7 @@ pub mod ahc_vdsl {
                 for (color, positions) in &color_to_pos {
                     write!(&mut s, "{} {}", color, positions.len()).unwrap();
                     for &(x, y) in positions {
-                        write!(&mut s, " {y} {x}").unwrap();
+                        write!(&mut s, " {x} {y}").unwrap();
                     }
                     writeln!(&mut s).unwrap();
                 }

@@ -314,10 +314,11 @@ function parseGridCommand(
                         const count = parseInt(lParts[1]);
                         for (let j = 0; j < count; j++) {
                             if (2 + j * 2 + 1 < lParts.length) {
-                                const r = parseInt(lParts[2 + j * 2]);
-                                const c = parseInt(lParts[2 + j * 2 + 1]);
-                                if (r >= 0 && r < H && c >= 0 && c < W) {
-                                    gridColors[r][c] = color;
+                                // Interpret as (x, y) coordinates
+                                const x = parseInt(lParts[2 + j * 2]);
+                                const y = parseInt(lParts[2 + j * 2 + 1]);
+                                if (y >= 0 && y < H && x >= 0 && x < W) {
+                                    gridColors[y][x] = color;
                                 }
                             }
                         }
