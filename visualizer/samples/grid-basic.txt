@@ -1,0 +1,13 @@
+$v(default) GRID 5 5 #000000 #BB0000 #FFFFFF
+CELL_TEXT
+A B C D E
+F G H I J
+KL M N O P
+Q R S T U
+V W X Y Z
+CELL_COLORS_POS
+1
+#BBBBBB 5 0 0 1 1 2 2 3 3 4 4
+$v(default) SCORE 1000
+$v(default) DEBUG
+$v(default) COMMIT

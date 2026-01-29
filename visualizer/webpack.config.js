@@ -33,6 +33,7 @@ module.exports = {
         new CopyWebpackPlugin({
             patterns: [
                 { from: 'err', to: 'err', noErrorOnMissing: true },
+                { from: 'samples', to: 'samples', noErrorOnMissing: true },
             ],
         }),
     ],
@@ -43,5 +44,6 @@ module.exports = {
         compress: true,
         port: 8080,
         hot: true,
+        historyApiFallback: true,
     },
 };

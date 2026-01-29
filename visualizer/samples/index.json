@@ -1,0 +1,44 @@
+[
+    {
+        "id": "grid-basic",
+        "title": "Basic Grid",
+        "description": "基本的なGrid表示のサンプル",
+        "dataFile": "grid-basic.txt",
+        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/grid_basic.rs"
+    },
+    {
+        "id": "grid-colors",
+        "title": "Grid with Colors",
+        "description": "セルに色を付けたGridのサンプル",
+        "dataFile": "grid-colors.txt",
+        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/grid_colors.rs"
+    },
+    {
+        "id": "grid-lines",
+        "title": "Grid with Lines",
+        "description": "Gridにラインを描画するサンプル",
+        "dataFile": "grid-lines.txt",
+        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/grid_lines.rs"
+    },
+    {
+        "id": "2d-plane",
+        "title": "2D Plane",
+        "description": "2Dプレーンに図形を描画するサンプル",
+        "dataFile": "2d-plane.txt",
+        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/2d_plane.rs"
+    },
+    {
+        "id": "canvas-multiple",
+        "title": "Canvas with Multiple Items",
+        "description": "複数のGrid/2DPlaneをCanvasに配置するサンプル",
+        "dataFile": "canvas-multiple.txt",
+        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/canvas_multiple.rs"
+    },
+    {
+        "id": "animation",
+        "title": "Animation",
+        "description": "複数フレームによるアニメーションのサンプル",
+        "dataFile": "animation.txt",
+        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/animation.rs"
+    }
+]
