@@ -1,5 +1,35 @@
 // Types for the visualizer
 
+// File System Access API types (for browsers that support it)
+declare global {
+    interface Window {
+        showOpenFilePicker(options?: {
+            types?: Array<{
+                description?: string;
+                accept: Record<string, string[]>;
+            }>;
+            multiple?: boolean;
+            excludeAcceptAllOption?: boolean;
+        }): Promise<FileSystemFileHandle[]>;
+        showDirectoryPicker(options?: {
+            mode?: 'read' | 'readwrite';
+        }): Promise<FileSystemDirectoryHandle>;
+    }
+
+    interface FileSystemFileHandle {
+        readonly kind: 'file';
+        readonly name: string;
+        getFile(): Promise<File>;
+    }
+
+    interface FileSystemDirectoryHandle {
+        readonly kind: 'directory';
+        readonly name: string;
+        values(): AsyncIterableIterator<FileSystemFileHandle | FileSystemDirectoryHandle>;
+        getFileHandle(name: string): Promise<FileSystemFileHandle>;
+    }
+}
+
 export interface Point {
     x: number;
     y: number;

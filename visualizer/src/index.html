@@ -22,11 +22,34 @@
     <div class="container">
         <div class="code-input-section">
             <div style="margin-bottom: 10px;">
-                <span style="font-weight: 600; font-size: 16px; color: #333;">Code</span>
-                <button id="updateBtn"
-                    style="margin-left: 15px; padding: 6px 12px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 13px;">更新</button>
-                <button id="openCodeBtn"
-                    style="margin-left: 8px; padding: 6px 12px; cursor: pointer; background-color: #FF9800; color: white; border: none; border-radius: 4px; font-size: 13px;">別タブで開く</button>
+                <div style="margin-bottom: 8px;">
+                    <!-- Input mode selector -->
+                    <div style="display: inline-block; padding: 4px 8px; background-color: #f5f5f5; border-radius: 4px;">
+                        <label style="margin-right: 15px; font-size: 13px; cursor: pointer;">
+                            <input type="radio" name="inputMode" value="file" id="fileModeRadio" checked>
+                            ファイル入力
+                        </label>
+                        <label style="font-size: 13px; cursor: pointer;">
+                            <input type="radio" name="inputMode" value="direct" id="directModeRadio">
+                            直接入力
+                        </label>
+                    </div>
+
+                    <!-- File selection controls (shown only in file mode) -->
+                    <button id="selectFileBtn"
+                        style="display: none; margin-left: 15px; padding: 6px 12px; cursor: pointer; background-color: #2196F3; color: white; border: none; border-radius: 4px; font-size: 13px;">ファイル選択</button>
+                    <button id="selectDirBtn"
+                        style="display: none; margin-left: 8px; padding: 6px 12px; cursor: pointer; background-color: #9C27B0; color: white; border: none; border-radius: 4px; font-size: 13px;">ディレクトリ選択</button>
+                    <input type="text" id="fileListInput" list="fileListOptions"
+                        style="display: none; margin-left: 8px; padding: 6px 8px; font-size: 13px; border-radius: 4px; border: 1px solid #ccc; min-width: 300px;"
+                        placeholder="ファイルまたはディレクトリを選択してください。更新ボタンでファイルから再読み込みされます。">
+                    <datalist id="fileListOptions">
+                    </datalist>
+
+                    <!-- Action buttons -->
+                    <button id="updateBtn"
+                        style="margin-left: 15px; padding: 6px 12px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 13px;">更新</button>
+                </div>
             </div>
             <textarea id="codeInput" placeholder="Enter your code here..."></textarea>
         </div>
