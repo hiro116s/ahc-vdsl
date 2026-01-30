@@ -97,12 +97,23 @@ function renderSamplesPage(): void {
         `;
     });
 
-    container.innerHTML = `
-        <div class="samples-header">
-            <a href="/" class="back-link">← Back to Main</a>
-            <h1>Samples</h1>
-        </div>
+    // Add navigation bar if not already present
+    if (!document.querySelector('.navbar')) {
+        const navbar = document.createElement('nav');
+        navbar.className = 'navbar';
+        navbar.innerHTML = `
+            <div class="navbar-container">
+                <a href="/" class="navbar-brand">AHC VDSL Visualizer</a>
+                <div class="navbar-links">
+                    <a href="/samples" class="navbar-link active">Samples</a>
+                    <a href="https://github.com/hiro116s/ahc-vdsl" target="_blank" rel="noopener noreferrer" class="navbar-link">Documentation (Github)</a>
+                </div>
+            </div>
+        `;
+        document.body.insertBefore(navbar, document.body.firstChild);
+    }
 
+    container.innerHTML = `
         <div class="samples-layout">
             <div class="samples-sidebar">
                 <div class="sample-list">
@@ -129,21 +140,19 @@ function renderSamplesPage(): void {
 
                 <div id="controls" style="margin-top: 10px; display: none;">
                     <input type="range" id="frameSlider" min="0" value="0" step="1" style="width: 100%;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                    <div style="display: flex; align-items: center; margin-top: 5px; gap: 10px;">
+                        <div style="display: flex; align-items: center; font-size: 12px; color: #555;">
+                            <span style="margin-right: 5px;">Speed:</span>
+                            <input type="range" id="speedSlider" min="1" max="60" value="20" style="width: 80px;">
+                            <span id="speedValue" style="margin-left: 5px; width: 30px;">20fps</span>
+                        </div>
+                        <button id="prevBtn" style="padding: 5px 10px;">&lt;</button>
+                        <button id="playBtn" style="padding: 5px 10px;">Play</button>
+                        <button id="nextBtn" style="padding: 5px 10px;">&gt;</button>
                         <div style="display: flex; align-items: center; gap: 5px;">
                             <input type="number" id="frameNumberInput" min="1" value="1"
                                 style="width: 60px; text-align: right; padding: 2px;">
                             <span id="totalFramesDisplay">/ 0</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="display: flex; align-items: center; font-size: 12px; color: #555;">
-                                <span style="margin-right: 5px;">Speed:</span>
-                                <input type="range" id="speedSlider" min="1" max="60" value="20" style="width: 80px;">
-                                <span id="speedValue" style="margin-left: 5px; width: 30px;">20fps</span>
-                            </div>
-                            <button id="prevBtn" style="padding: 5px 10px;">&lt;</button>
-                            <button id="playBtn" style="padding: 5px 10px;">Play</button>
-                            <button id="nextBtn" style="padding: 5px 10px;">&gt;</button>
                         </div>
                     </div>
                 </div>
@@ -228,9 +237,9 @@ async function loadAndRenderSample(sample: Sample): Promise<void> {
     const linksContainer = document.getElementById('linksContainer') as HTMLDivElement;
     const codeLinkDiv = document.getElementById('codeLink') as HTMLDivElement;
     const dslDocLinkDiv = document.getElementById('dslDocLink') as HTMLDivElement;
-    
+
     let hasAnyLink = false;
-    
+
     // Update code link
     if (sample.codeUrl) {
         const codeLink = codeLinkDiv.querySelector('a') as HTMLAnchorElement;
@@ -241,7 +250,7 @@ async function loadAndRenderSample(sample: Sample): Promise<void> {
     } else {
         codeLinkDiv.style.display = 'none';
     }
-    
+
     // Calculate DSL doc link from dataFile (link to the raw .txt file)
     const dslDocUrl = `/samples/${sample.dataFile}`;
     const dslLink = dslDocLinkDiv.querySelector('a') as HTMLAnchorElement;
@@ -249,7 +258,7 @@ async function loadAndRenderSample(sample: Sample): Promise<void> {
     dslLink.textContent = dslDocUrl;
     dslDocLinkDiv.style.display = 'block';
     hasAnyLink = true;
-    
+
     linksContainer.style.display = hasAnyLink ? 'block' : 'none';
 
     try {

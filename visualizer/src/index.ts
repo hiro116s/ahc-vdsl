@@ -17,8 +17,9 @@ function initRouter(): void {
 
 function initMainPage(): void {
     // DOM Elements
-    const seedInput = document.getElementById('seedInput') as HTMLInputElement;
-    const stderrInput = document.getElementById('stderrInput') as HTMLTextAreaElement;
+    const codeInput = document.getElementById('codeInput') as HTMLTextAreaElement;
+    const updateBtn = document.getElementById('updateBtn') as HTMLButtonElement;
+    const openCodeBtn = document.getElementById('openCodeBtn') as HTMLButtonElement;
     const frameSlider = document.getElementById('frameSlider') as HTMLInputElement;
     const frameNumberInput = document.getElementById('frameNumberInput') as HTMLInputElement;
     const totalFramesDisplay = document.getElementById('totalFramesDisplay') as HTMLSpanElement;
@@ -28,8 +29,6 @@ function initMainPage(): void {
     const nextBtn = document.getElementById('nextBtn') as HTMLButtonElement;
     const playBtn = document.getElementById('playBtn') as HTMLButtonElement;
     const modeButtonsContainer = document.querySelector('.mode-buttons') as HTMLDivElement;
-    const refreshBtn = document.getElementById('refreshBtn') as HTMLButtonElement;
-    const collapseAllBtn = document.getElementById('collapseAllBtn') as HTMLButtonElement;
 
     // State
     let parsedModes: ParsedModes = {};
@@ -38,12 +37,18 @@ function initMainPage(): void {
     let currentFrameIndex = 0;
     let isPlaying = false;
     let playInterval: ReturnType<typeof setInterval> | null = null;
-    let currentStderrText = "";
+    let fullCodeText = ""; // Store full code text
 
     // Event Listeners
-    seedInput.addEventListener('input', loadFilesForSeed);
-    refreshBtn.addEventListener('click', loadFilesForSeed);
-    stderrInput.addEventListener('input', parseAndVisualize);
+    updateBtn.addEventListener('click', parseAndVisualize);
+
+    openCodeBtn.addEventListener('click', () => {
+        const blob = new Blob([fullCodeText || codeInput.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        // Clean up the URL after a short delay
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
 
     frameSlider.addEventListener('input', (e) => {
         currentFrameIndex = parseInt((e.target as HTMLInputElement).value);
@@ -97,16 +102,6 @@ function initMainPage(): void {
 
     playBtn.addEventListener('click', togglePlay);
 
-    collapseAllBtn.addEventListener('click', () => {
-        const details = document.querySelectorAll('details');
-        const allOpen = Array.from(details).every(d => d.open);
-        details.forEach(d => {
-            if (allOpen) d.removeAttribute('open');
-            else d.setAttribute('open', '');
-        });
-        collapseAllBtn.textContent = allOpen ? '入力欄を展開' : '入力欄を折り畳む';
-    });
-
     function togglePlay(): void {
         if (isPlaying) {
             if (playInterval) clearInterval(playInterval);
@@ -145,46 +140,25 @@ function initMainPage(): void {
         }
     }
 
-    async function loadFilesForSeed(): Promise<void> {
-        const seed = seedInput.value;
-        stderrInput.value = "";
-
-        try {
-            const errRes = await fetch(`err/${seed}.txt`);
-
-            if (errRes.ok) {
-                const text = await errRes.text();
-                currentStderrText = text;
-                if (text.length > 1000) {
-                    stderrInput.value = text.substring(0, 1000) + "\n... (truncated)";
-                } else {
-                    stderrInput.value = text;
-                }
-            } else {
-                currentStderrText = "";
-                stderrInput.value = "";
-            }
-        } catch (e) {
-            console.error("Error loading files:", e);
+    function parseAndVisualize(): void {
+        // Disable update button to prevent clicking on truncated text
+        updateBtn.disabled = true;
+        
+        // Store full code text from textarea (use existing fullCodeText if available)
+        if (!fullCodeText || codeInput.value !== fullCodeText.substring(0, 5000) + "\n\n... (truncated, click '別タブで開く' to view full content)") {
+            fullCodeText = codeInput.value;
         }
+        const codeText = fullCodeText;
 
-        parseAndVisualize();
-    }
-
-    function parseAndVisualize(e?: Event): void {
-        if (e && e.target === stderrInput) {
-            currentStderrText = stderrInput.value;
+        // Truncate display if too long
+        if (fullCodeText.length > 5000) {
+            codeInput.value = fullCodeText.substring(0, 5000) + "\n\n... (truncated, click '別タブで開く' to view full content)";
         }
-        if (!currentStderrText && stderrInput.value) {
-            currentStderrText = stderrInput.value;
-        }
-
-        const stderrText = currentStderrText;
 
         currentFrameIndex = 0;
         if (isPlaying) togglePlay();
 
-        parsedModes = parseStderr(stderrText);
+        parsedModes = parseStderr(codeText);
 
         const modes = Object.keys(parsedModes).filter(m => parsedModes[m].length > 0);
         if (modes.length === 0) modes.push("default");
@@ -198,6 +172,9 @@ function initMainPage(): void {
         } else {
             switchMode("default");
         }
+        
+        // Re-enable update button after processing
+        updateBtn.disabled = false;
     }
 
     function updateModeSelector(modes: string[]): void {
@@ -335,8 +312,8 @@ function initMainPage(): void {
         }
     }
 
-    // Initialize main page
-    loadFilesForSeed();
+    // Initialize main page - start with empty visualization
+    parseAndVisualize();
 }
 
 // Initialize
