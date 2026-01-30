@@ -6,15 +6,15 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    padding: 20px;
+    padding: 10px;
     background-color: #f5f5f5;
 }
 
 .container {
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: 2000px;
+    margin: 0;
     background-color: white;
-    padding: 30px;
+    padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -268,12 +268,69 @@ details textarea {
 .samples-main {
     flex: 1;
     min-width: 0;
+    margin-left: 10px;
+}
+
+.visualizer-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #333;
+}
+
+.links-container {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.link-item {
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.link-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.code-link-top {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.code-link-url {
+    color: #1565c0;
+    text-decoration: none;
+    word-break: break-all;
+    font-weight: 500;
+}
+
+.code-link-url:hover {
+    text-decoration: underline;
+}
+
+.sample-category-header {
+    padding: 10px 15px;
+    background-color: #f5f5f5;
+    font-weight: 600;
+    font-size: 13px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #ddd;
 }
 
 .sample-list {
     border: 1px solid #ddd;
     border-radius: 4px;
-    max-height: 400px;
+    max-height: 600px;
     overflow-y: auto;
 }
 
@@ -306,23 +363,6 @@ details textarea {
 .sample-description {
     font-size: 12px;
     color: #666;
-}
-
-.code-link-container {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-}
-
-.code-link {
-    color: #1976D2;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.code-link:hover {
-    text-decoration: underline;
 }
 
 .error-message {

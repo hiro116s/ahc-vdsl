@@ -8,7 +8,8 @@ export interface Sample {
     title: string;
     description: string;
     dataFile: string;
-    codeUrl: string;
+    codeUrl?: string;
+    category: string;
 }
 
 let samples: Sample[] = [];
@@ -66,6 +67,36 @@ export async function initSamplesPage(): Promise<void> {
 
 function renderSamplesPage(): void {
     const container = document.querySelector('.container') as HTMLDivElement;
+
+    // Group samples by category dynamically
+    const samplesByCategory = new Map<string, Sample[]>();
+    samples.forEach(sample => {
+        const cat = sample.category || 'other';
+        if (!samplesByCategory.has(cat)) {
+            samplesByCategory.set(cat, []);
+        }
+        samplesByCategory.get(cat)!.push(sample);
+    });
+
+    const renderSampleItems = (items: Sample[]) => items.map(sample => `
+        <div class="sample-item" data-id="${sample.id}">
+            <div class="sample-title">${sample.title}</div>
+            <div class="sample-description">${sample.description}</div>
+        </div>
+    `).join('');
+
+    // Build category sections
+    let categorySections = '';
+    samplesByCategory.forEach((items, categoryName) => {
+        const displayName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
+        categorySections += `
+            <div class="sample-category">
+                <div class="sample-category-header">${displayName}</div>
+                ${renderSampleItems(items)}
+            </div>
+        `;
+    });
+
     container.innerHTML = `
         <div class="samples-header">
             <a href="/" class="back-link">← Back to Main</a>
@@ -75,19 +106,22 @@ function renderSamplesPage(): void {
         <div class="samples-layout">
             <div class="samples-sidebar">
                 <div class="sample-list">
-                    ${samples.map(sample => `
-                        <div class="sample-item" data-id="${sample.id}">
-                            <div class="sample-title">${sample.title}</div>
-                            <div class="sample-description">${sample.description}</div>
-                        </div>
-                    `).join('')}
-                </div>
-                <div id="codeLink" class="code-link-container" style="display: none;">
-                    <a href="#" target="_blank" class="code-link">📄 View source code</a>
+                    ${categorySections}
                 </div>
             </div>
 
             <div class="samples-main">
+                <div id="visualizerTitle" class="visualizer-title" style="display: none;"></div>
+                
+                <div id="linksContainer" class="links-container" style="display: none;">
+                    <div id="codeLink" class="link-item" style="display: none;">
+                        <span class="link-label">Source code:</span> <a href="#" target="_blank" class="code-link-url"></a>
+                    </div>
+                    <div id="dslDocLink" class="link-item" style="display: none;">
+                        <span class="link-label">DSL documentation:</span> <a href="#" target="_blank" class="code-link-url"></a>
+                    </div>
+                </div>
+
                 <div class="mode-selector" style="display: none;">
                     <h3>表示モード</h3>
                     <div class="mode-buttons"></div>
@@ -185,15 +219,38 @@ async function selectSampleForce(id: string): Promise<void> {
 async function loadAndRenderSample(sample: Sample): Promise<void> {
     currentSample = sample;
 
+    // Update visualizer title using sample title
+    const titleElement = document.getElementById('visualizerTitle') as HTMLDivElement;
+    titleElement.textContent = sample.title;
+    titleElement.style.display = 'block';
+
+    // Update links container
+    const linksContainer = document.getElementById('linksContainer') as HTMLDivElement;
+    const codeLinkDiv = document.getElementById('codeLink') as HTMLDivElement;
+    const dslDocLinkDiv = document.getElementById('dslDocLink') as HTMLDivElement;
+    
+    let hasAnyLink = false;
+    
     // Update code link
-    const codeLinkContainer = document.getElementById('codeLink') as HTMLDivElement;
-    const codeLink = codeLinkContainer.querySelector('a') as HTMLAnchorElement;
     if (sample.codeUrl) {
+        const codeLink = codeLinkDiv.querySelector('a') as HTMLAnchorElement;
         codeLink.href = sample.codeUrl;
-        codeLinkContainer.style.display = 'block';
+        codeLink.textContent = sample.codeUrl;
+        codeLinkDiv.style.display = 'block';
+        hasAnyLink = true;
     } else {
-        codeLinkContainer.style.display = 'none';
+        codeLinkDiv.style.display = 'none';
     }
+    
+    // Calculate DSL doc link from dataFile (link to the raw .txt file)
+    const dslDocUrl = `/samples/${sample.dataFile}`;
+    const dslLink = dslDocLinkDiv.querySelector('a') as HTMLAnchorElement;
+    dslLink.href = dslDocUrl;
+    dslLink.textContent = dslDocUrl;
+    dslDocLinkDiv.style.display = 'block';
+    hasAnyLink = true;
+    
+    linksContainer.style.display = hasAnyLink ? 'block' : 'none';
 
     try {
         const response = await fetch(`/samples/${sample.dataFile}`);

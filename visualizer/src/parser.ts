@@ -81,7 +81,7 @@ export function parseStderr(stderrText: string): ParsedModes {
 
                             // Check if rectangles overlap
                             if (!(bounds1.right <= bounds2.left || bounds2.right <= bounds1.left ||
-                                  bounds1.bottom <= bounds2.top || bounds2.bottom <= bounds1.top)) {
+                                bounds1.bottom <= bounds2.top || bounds2.bottom <= bounds1.top)) {
                                 pendingErrors[mode].push(`Item overlap detected: Items at positions (${bounds1.left},${bounds1.top})-(${bounds1.right},${bounds1.bottom}) and (${bounds2.left},${bounds2.top})-(${bounds2.right},${bounds2.bottom}) overlap.`);
                             }
                         }

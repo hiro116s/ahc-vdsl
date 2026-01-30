@@ -7,11 +7,11 @@ Q R S T U
 V W X Y Z
 CELL_COLORS_POS
 1
-#BBBBBB 3 2 1 2 2 2 3
+#BBBBBB 6 2 1 2 2 2 3 3 1 3 2 4 2
 LINES
-1
+2
 #00BBBB 3 2 1 2 2 2 3
-
+#BB00BB 3 3 1 3 2 4 2
 $v(default) SCORE 1000
 $v(default) DEBUG
 $v(default) COMMIT
