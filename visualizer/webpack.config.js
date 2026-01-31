@@ -37,6 +37,11 @@ module.exports = {
             template: './src/index.html',
             filename: 'index.html',
         }),
+        // Create 404.html for GitHub Pages SPA routing
+        new HtmlWebpackPlugin({
+            template: './src/index.html',
+            filename: '404.html',
+        }),
         new CopyWebpackPlugin({
             patterns: [
                 { from: 'err', to: 'err', noErrorOnMissing: true },
