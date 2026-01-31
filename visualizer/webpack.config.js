@@ -7,6 +7,7 @@ module.exports = {
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist'),
+        publicPath: process.env.NODE_ENV === 'production' ? '/ahc-vdsl/' : '/',
         clean: true,
     },
     resolve: {
