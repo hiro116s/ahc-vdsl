@@ -6,33 +6,36 @@
 `rust/src/ahc_vdsl.rs` を使うと、プロトコル仕様を意識せずに型安全にビジュアライザ出力を生成できます。
 
 ### セットアップ
-`main.rs`を解答を含むコード、`Cargo.toml`を解答を
 
-1. `src/ahc_vdsl.rs` をコピーし、`main.rs`にペーストします。
+1. `ahc_vdsl.rs` をプロジェクトにコピーします
 2. `Cargo.toml` に以下を追加します:
 
 ```toml
+[dependencies]
+rustc-hash = "2"
+
 [features]
 vis = []
 ```
 
-3. `main.rs` 上で以下の
+3. `main.rs` または `lib.rs` でモジュールを宣言します:
 
 ```rust
-use crate::ahc_vdsl::*;
+mod ahc_vdsl;
+use ahc_vdsl::ahc_vdsl::*;
 ```
 
 ### Feature フラグ
 
 - `vis` feature が有効な場合: 実際にビジュアライザ出力を生成します
-- `vis` feature が無効な場合: 全ての関数呼び出しが無視され、出力には何も表示されなくなります。ただし、visualizerに渡すために生成したデータは消えないため注意してください
+- `vis` feature が無効な場合: 全ての関数呼び出しがゼロコストで無視されます（本番提出時に最適化）
 
 ```bash
 # ビジュアライザ出力あり
 cargo run --features vis
 
 # ビジュアライザ出力なし（本番用）
-cargo run
+cargo run --release
 ```
 
 ### 基本的な使い方
@@ -40,7 +43,7 @@ cargo run
 #### 1. シンプルなグリッド表示
 
 ```rust
-use crate::ahc_vdsl::*;
+use ahc_vdsl::ahc_vdsl::*;
 
 fn main() {
     let mut vis = VisRoot::new();
