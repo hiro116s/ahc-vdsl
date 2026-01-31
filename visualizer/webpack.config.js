@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
     entry: './src/index.ts',
@@ -27,6 +28,11 @@ module.exports = {
         ],
     },
     plugins: [
+        new webpack.DefinePlugin({
+            'process.env.BASE_PATH': JSON.stringify(
+                process.env.NODE_ENV === 'production' ? '/ahc-vdsl' : ''
+            ),
+        }),
         new HtmlWebpackPlugin({
             template: './src/index.html',
             filename: 'index.html',

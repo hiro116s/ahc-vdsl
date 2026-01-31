@@ -3,12 +3,19 @@ import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand, CanvasCommand } from
 import { parseStderr } from './parser';
 import { createCanvasSvg, renderGridFromCommand, render2DPlaneFromCommand } from './renderer';
 import { initSamplesPage } from './samples';
+import { getBasePath } from './utils';
 
 // Router: Check current path and initialize appropriate page
 function initRouter(): void {
     const path = window.location.pathname;
+    const basePath = getBasePath();
 
-    if (path === '/samples' || path === '/samples/') {
+    // Remove base path from pathname for routing
+    const routePath = basePath && path.startsWith(basePath)
+        ? path.substring(basePath.length)
+        : path;
+
+    if (routePath === '/samples' || routePath === '/samples/') {
         initSamplesPage();
     } else {
         initMainPage();
@@ -16,6 +23,12 @@ function initRouter(): void {
 }
 
 function initMainPage(): void {
+    // Update navigation links with correct base path
+    const navBrand = document.querySelector('.navbar-brand') as HTMLAnchorElement;
+    const navSamplesLink = document.querySelector('.navbar-link[href="/samples"]') as HTMLAnchorElement;
+    if (navBrand) navBrand.href = getBasePath() + '/';
+    if (navSamplesLink) navSamplesLink.href = getBasePath() + '/samples';
+
     // DOM Elements
     const codeInput = document.getElementById('codeInput') as HTMLTextAreaElement;
     const selectFileBtn = document.getElementById('selectFileBtn') as HTMLButtonElement;

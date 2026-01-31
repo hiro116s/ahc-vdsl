@@ -2,6 +2,7 @@ import './styles.css';
 import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand, CanvasCommand } from './types';
 import { parseStderr } from './parser';
 import { createCanvasSvg, renderGridFromCommand, render2DPlaneFromCommand } from './renderer';
+import { buildUrl } from './utils';
 
 export interface Sample {
     id: string;
@@ -24,7 +25,7 @@ let playInterval: ReturnType<typeof setInterval> | null = null;
 export async function initSamplesPage(): Promise<void> {
     // Load sample list
     try {
-        const response = await fetch('/samples/index.json');
+        const response = await fetch(buildUrl('/samples/index.json'));
         if (response.ok) {
             samples = await response.json();
         } else {
@@ -103,9 +104,9 @@ function renderSamplesPage(): void {
         navbar.className = 'navbar';
         navbar.innerHTML = `
             <div class="navbar-container">
-                <a href="/" class="navbar-brand">AHC VDSL Visualizer</a>
+                <a href="${buildUrl('/')}" class="navbar-brand">AHC VDSL Visualizer</a>
                 <div class="navbar-links">
-                    <a href="/samples" class="navbar-link active">Samples</a>
+                    <a href="${buildUrl('/samples')}" class="navbar-link active">Samples</a>
                     <a href="https://github.com/hiro116s/ahc-vdsl" target="_blank" rel="noopener noreferrer" class="navbar-link">Documentation (Github)</a>
                 </div>
             </div>
@@ -206,7 +207,7 @@ async function selectSample(id: string | null): Promise<void> {
         const sample = samples.find(s => s.id === id);
         if (sample) {
             // Update URL
-            const url = `/samples?id=${sample.id}`;
+            const url = buildUrl(`/samples?id=${sample.id}`);
             history.pushState({ sampleId: sample.id }, '', url);
             await loadAndRenderSample(sample);
         }
@@ -252,7 +253,7 @@ async function loadAndRenderSample(sample: Sample): Promise<void> {
     }
 
     // Calculate DSL doc link from dataFile (link to the raw .txt file)
-    const dslDocUrl = `/samples/${sample.dataFile}`;
+    const dslDocUrl = buildUrl(`/samples/${sample.dataFile}`);
     const dslLink = dslDocLinkDiv.querySelector('a') as HTMLAnchorElement;
     dslLink.href = dslDocUrl;
     dslLink.textContent = dslDocUrl;
@@ -262,7 +263,7 @@ async function loadAndRenderSample(sample: Sample): Promise<void> {
     linksContainer.style.display = hasAnyLink ? 'block' : 'none';
 
     try {
-        const response = await fetch(`/samples/${sample.dataFile}`);
+        const response = await fetch(buildUrl(`/samples/${sample.dataFile}`));
         if (!response.ok) {
             throw new Error(`Failed to load sample data: ${sample.dataFile}`);
         }
