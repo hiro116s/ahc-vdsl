@@ -4,7 +4,6 @@
         "title": "Basic Grid",
         "description": "基本的なGrid表示のサンプル",
         "dataFile": "grid-basic.txt",
-        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/grid_basic.rs",
         "category": "simple"
     },
     {
@@ -12,7 +11,6 @@
         "title": "Grid with Lines",
         "description": "Gridにラインを描画するサンプル",
         "dataFile": "grid-lines.txt",
-        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/grid_lines.rs",
         "category": "simple"
     },
     {
@@ -20,7 +18,6 @@
         "title": "2D Plane",
         "description": "2Dプレーンに図形を描画するサンプル",
         "dataFile": "2d-plane.txt",
-        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/2d_plane.rs",
         "category": "simple"
     },
     {
@@ -35,7 +32,6 @@
         "title": "Animation",
         "description": "複数フレームによるアニメーションのサンプル",
         "dataFile": "animation.txt",
-        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/animation.rs",
         "category": "simple"
     },
     {
@@ -43,7 +39,6 @@
         "title": "Multiple Modes",
         "description": "モード切り替えのサンプル",
         "dataFile": "multiple-mode.txt",
-        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/multiple_mode.rs",
         "category": "simple"
     },
     {
@@ -51,7 +46,15 @@
         "title": "AHC059",
         "description": "AHC059のビジュアライザ",
         "dataFile": "ahc059.txt",
-        "codeUrl": "https://github.com/user/ahc-vdsl/blob/main/rust/examples/ahc059.rs",
+        "codeUrl": "https://atcoder.jp/contests/ahc059/submissions/72828864",
+        "category": "past_contest"
+    },
+    {
+        "id": "chokudai001",
+        "title": "Chokudai Contest 001",
+        "description": "Chokudai Contest 001のビジュアライザ",
+        "dataFile": "chokudai_001.txt",
+        "codeUrl": "https://atcoder.jp/contests/chokudai001/submissions/72844579",
         "category": "past_contest"
     }
 ]
