@@ -29,7 +29,7 @@ module.exports = {
     },
     plugins: [
         new webpack.DefinePlugin({
-            'process.env.BASE_PATH': JSON.stringify(
+            BASE_PATH: JSON.stringify(
                 process.env.NODE_ENV === 'production' ? '/ahc-vdsl' : ''
             ),
         }),
@@ -41,6 +41,11 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: './src/index.html',
             filename: '404.html',
+        }),
+        // Create samples/index.html for /samples route
+        new HtmlWebpackPlugin({
+            template: './src/index.html',
+            filename: 'samples/index.html',
         }),
         new CopyWebpackPlugin({
             patterns: [
@@ -56,6 +61,12 @@ module.exports = {
         compress: true,
         port: 8080,
         hot: true,
-        historyApiFallback: true,
+        historyApiFallback: {
+            // Rewrite all routes to index.html for SPA routing
+            rewrites: [
+                { from: /^\/samples/, to: '/index.html' },
+                { from: /./, to: '/index.html' }
+            ],
+        },
     },
 };

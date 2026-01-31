@@ -5,6 +5,31 @@ import { createCanvasSvg, renderGridFromCommand, render2DPlaneFromCommand } from
 import { initSamplesPage } from './samples';
 import { getBasePath } from './utils';
 
+// Update navigation links with correct base path
+function updateNavigationLinks(): void {
+    const basePath = getBasePath();
+    const navBrand = document.querySelector('.navbar-brand') as HTMLAnchorElement;
+
+    // Update brand link if it's a relative root path
+    if (navBrand) {
+        const currentHref = navBrand.getAttribute('href');
+        if (currentHref === '/' || currentHref === basePath + '/') {
+            navBrand.href = basePath + '/';
+        }
+    }
+
+    // Find samples link - it might have different hrefs depending on when it was created
+    const navbarLinks = document.querySelectorAll('.navbar-link');
+    navbarLinks.forEach(link => {
+        const anchor = link as HTMLAnchorElement;
+        const href = anchor.getAttribute('href');
+        // Update if it points to /samples with or without base path
+        if (href === '/samples' || href === basePath + '/samples') {
+            anchor.href = basePath + '/samples';
+        }
+    });
+}
+
 // Router: Check current path and initialize appropriate page
 function initRouter(): void {
     const path = window.location.pathname;
@@ -15,20 +40,21 @@ function initRouter(): void {
         ? path.substring(basePath.length)
         : path;
 
-    if (routePath === '/samples' || routePath === '/samples/') {
+    console.log('[Router] path:', path, 'basePath:', basePath, 'routePath:', routePath);
+
+    // Update navigation links before initializing pages
+    updateNavigationLinks();
+
+    if (routePath === '/samples' || routePath === '/samples/' || routePath.startsWith('/samples/')) {
+        console.log('[Router] Initializing samples page');
         initSamplesPage();
     } else {
+        console.log('[Router] Initializing main page');
         initMainPage();
     }
 }
 
 function initMainPage(): void {
-    // Update navigation links with correct base path
-    const navBrand = document.querySelector('.navbar-brand') as HTMLAnchorElement;
-    const navSamplesLink = document.querySelector('.navbar-link[href="/samples"]') as HTMLAnchorElement;
-    if (navBrand) navBrand.href = getBasePath() + '/';
-    if (navSamplesLink) navSamplesLink.href = getBasePath() + '/samples';
-
     // DOM Elements
     const codeInput = document.getElementById('codeInput') as HTMLTextAreaElement;
     const selectFileBtn = document.getElementById('selectFileBtn') as HTMLButtonElement;

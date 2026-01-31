@@ -1,12 +1,15 @@
 // Utility functions
 
+// Base path constant injected by webpack DefinePlugin
+declare const BASE_PATH: string;
+
 /**
  * Get the base path for the application
  * In production (GitHub Pages), this will be '/ahc-vdsl'
  * In development, this will be ''
  */
 export function getBasePath(): string {
-    return process.env.BASE_PATH || '';
+    return BASE_PATH || '';
 }
 
 /**

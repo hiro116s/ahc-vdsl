@@ -1,11 +1,7 @@
 // Types for the visualizer
 
-// Environment variables injected by webpack
-declare const process: {
-    env: {
-        BASE_PATH: string;
-    };
-};
+// Base path constant injected by webpack
+declare const BASE_PATH: string;
 
 // File System Access API types (for browsers that support it)
 declare global {
