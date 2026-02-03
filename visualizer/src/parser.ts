@@ -535,15 +535,19 @@ function parse2DPlaneCommand(
                     if (lParts.length >= 3) {
                         const color = lParts[0];
                         const width = parseFloat(lParts[1]);
-                        const vertexCount = parseInt(lParts[2]);
+                        const lineCount = parseInt(lParts[2]);
                         const points = [];
-                        for (let j = 0; j < vertexCount; j++) {
-                            const baseIdx = 3 + j * 2;
-                            if (baseIdx + 1 < lParts.length) {
-                                const x = parseFloat(lParts[baseIdx]);
-                                const y = parseFloat(lParts[baseIdx + 1]);
-                                if (!isNaN(x) && !isNaN(y)) {
-                                    points.push({ x, y });
+                        // Each line is 4 values: ax, ay, bx, by
+                        for (let j = 0; j < lineCount; j++) {
+                            const baseIdx = 3 + j * 4;
+                            if (baseIdx + 3 < lParts.length) {
+                                const ax = parseFloat(lParts[baseIdx]);
+                                const ay = parseFloat(lParts[baseIdx + 1]);
+                                const bx = parseFloat(lParts[baseIdx + 2]);
+                                const by = parseFloat(lParts[baseIdx + 3]);
+                                if (!isNaN(ax) && !isNaN(ay) && !isNaN(bx) && !isNaN(by)) {
+                                    points.push({ x: ax, y: ay });
+                                    points.push({ x: bx, y: by });
                                 }
                             }
                         }

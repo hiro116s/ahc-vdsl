@@ -244,28 +244,16 @@ pub mod ahc_vdsl {
         pub struct Vis2DPlane {
             h: f64,
             w: f64,
-            circle_groups: Vec<CircleGroup>,
-            line_groups: Vec<LineGroup>,
+            circle_groups: FxHashMap<(Color, Color), Vec<Circle>>,
+            line_groups: FxHashMap<(Color, u64), (f64, Vec<((f64, f64), (f64, f64))>)>,
             polygon_groups: Vec<PolygonGroup>,
             bounds: Option<ItemBounds>,
-        }
-
-        pub struct CircleGroup {
-            stroke_color: Color,
-            fill_color: Color,
-            circles: Vec<Circle>,
         }
 
         pub struct Circle {
             x: f64,
             y: f64,
             r: f64,
-        }
-
-        pub struct LineGroup {
-            color: Color,
-            width: f64,
-            points: Vec<(f64, f64)>,
         }
 
         pub struct PolygonGroup {
@@ -279,8 +267,8 @@ pub mod ahc_vdsl {
                 Self {
                     h,
                     w,
-                    circle_groups: Vec::new(),
-                    line_groups: Vec::new(),
+                    circle_groups: FxHashMap::default(),
+                    line_groups: FxHashMap::default(),
                     polygon_groups: Vec::new(),
                     bounds,
                 }
@@ -297,23 +285,26 @@ pub mod ahc_vdsl {
                 fill_color: Color,
                 circles: Vec<Circle>,
             ) -> Self {
-                self.circle_groups.push(CircleGroup {
-                    stroke_color,
-                    fill_color,
-                    circles,
-                });
+                self.circle_groups
+                    .entry((stroke_color, fill_color))
+                    .or_default()
+                    .extend(circles);
                 self
             }
 
             pub fn add_circle(
-                self,
+                mut self,
                 stroke_color: Color,
                 fill_color: Color,
                 x: f64,
                 y: f64,
                 r: f64,
             ) -> Self {
-                self.add_circle_group(stroke_color, fill_color, vec![Circle { x, y, r }])
+                self.circle_groups
+                    .entry((stroke_color, fill_color))
+                    .or_default()
+                    .push(Circle { x, y, r });
+                self
             }
 
             pub fn add_line_group(
@@ -322,16 +313,22 @@ pub mod ahc_vdsl {
                 width: f64,
                 points: Vec<(f64, f64)>,
             ) -> Self {
-                self.line_groups.push(LineGroup {
-                    color,
-                    width,
-                    points,
-                });
+                let width_key = width.to_bits();
+                // pointsをペアに変換 (2点で一つの線)
+                let lines: Vec<((f64, f64), (f64, f64))> = points
+                    .chunks_exact(2)
+                    .map(|chunk| (chunk[0], chunk[1]))
+                    .collect();
+                self.line_groups
+                    .entry((color, width_key))
+                    .or_insert_with(|| (width, Vec::new()))
+                    .1
+                    .extend(lines);
                 self
             }
 
             pub fn add_line(
-                self,
+                mut self,
                 color: Color,
                 width: f64,
                 ax: f64,
@@ -339,7 +336,13 @@ pub mod ahc_vdsl {
                 bx: f64,
                 by: f64,
             ) -> Self {
-                self.add_line_group(color, width, vec![(ax, ay), (bx, by)])
+                let width_key = width.to_bits();
+                let entry = self
+                    .line_groups
+                    .entry((color, width_key))
+                    .or_insert_with(|| (width, Vec::new()));
+                entry.1.push(((ax, ay), (bx, by)));
+                self
             }
 
             pub fn add_polygon(
@@ -375,16 +378,10 @@ pub mod ahc_vdsl {
                 if !self.circle_groups.is_empty() {
                     writeln!(&mut s, "CIRCLES").unwrap();
                     writeln!(&mut s, "{}", self.circle_groups.len()).unwrap();
-                    for group in &self.circle_groups {
-                        write!(
-                            &mut s,
-                            "{} {} {}",
-                            group.stroke_color,
-                            group.fill_color,
-                            group.circles.len()
-                        )
-                        .unwrap();
-                        for circle in &group.circles {
+                    for ((stroke_color, fill_color), circles) in &self.circle_groups {
+                        write!(&mut s, "{} {} {}", stroke_color, fill_color, circles.len())
+                            .unwrap();
+                        for circle in circles {
                             write!(&mut s, " {} {} {}", circle.x, circle.y, circle.r).unwrap();
                         }
                         writeln!(&mut s).unwrap();
@@ -395,17 +392,10 @@ pub mod ahc_vdsl {
                 if !self.line_groups.is_empty() {
                     writeln!(&mut s, "LINES").unwrap();
                     writeln!(&mut s, "{}", self.line_groups.len()).unwrap();
-                    for group in &self.line_groups {
-                        write!(
-                            &mut s,
-                            "{} {} {}",
-                            group.color,
-                            group.width,
-                            group.points.len()
-                        )
-                        .unwrap();
-                        for (x, y) in &group.points {
-                            write!(&mut s, " {x} {y}").unwrap();
+                    for ((color, _width_key), (width, lines)) in &self.line_groups {
+                        write!(&mut s, "{} {} {}", color, width, lines.len()).unwrap();
+                        for ((x1, y1), (x2, y2)) in lines {
+                            write!(&mut s, " {x1} {y1} {x2} {y2}").unwrap();
                         }
                         writeln!(&mut s).unwrap();
                     }

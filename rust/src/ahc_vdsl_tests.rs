@@ -150,7 +150,7 @@ fn test_vis2dplane_add_line() {
         .to_vis_string("test");
     assert!(output.contains("LINES"));
     assert!(output.contains("#00FF00")); // GREEN
-    assert!(output.contains("2 2 0 0 100 100"));
+    assert!(output.contains("2 1 0 0 100 100"));
 }
 
 #[cfg(feature = "vis")]
@@ -167,6 +167,64 @@ fn test_vis2dplane_add_polygon() {
     assert!(output.contains("#FF0000")); // RED stroke
     assert!(output.contains("#FFFF00")); // YELLOW fill
     assert!(output.contains("4")); // 4 vertices
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_vis2dplane_circle_grouping() {
+    // 同じ色の円を複数追加すると、1つのグループにまとめられることを確認
+    let output = Vis2DPlane::new(100.0, 100.0, None)
+        .add_circle(RED, BLUE, 10.0, 10.0, 5.0)
+        .add_circle(RED, BLUE, 20.0, 20.0, 5.0)
+        .add_circle(RED, BLUE, 30.0, 30.0, 5.0)
+        .add_circle(GREEN, YELLOW, 40.0, 40.0, 8.0) // 異なる色
+        .to_vis_string("test");
+
+    assert!(output.contains("CIRCLES"));
+    // グループ数は2つ（RED-BLUEとGREEN-YELLOW）
+    let circles_section = output.split("CIRCLES").nth(1).unwrap();
+    let first_line = circles_section.lines().nth(1).unwrap().trim();
+    assert_eq!(first_line, "2"); // 2グループ
+
+    // RED-BLUEグループに3つの円が含まれることを確認
+    assert!(output.contains("#FF0000 #0000FF 3")); // stroke=RED, fill=BLUE, count=3
+    assert!(output.contains("10 10 5"));
+    assert!(output.contains("20 20 5"));
+    assert!(output.contains("30 30 5"));
+
+    // GREEN-YELLOWグループに1つの円が含まれることを確認
+    assert!(output.contains("#00FF00 #FFFF00 1")); // stroke=GREEN, fill=YELLOW, count=1
+    assert!(output.contains("40 40 8"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_vis2dplane_line_grouping() {
+    // 同じ色・widthのラインを複数追加すると、1つのグループにまとめられることを確認
+    let output = Vis2DPlane::new(100.0, 100.0, None)
+        .add_line(RED, 2.0, 0.0, 0.0, 10.0, 10.0)
+        .add_line(RED, 2.0, 10.0, 10.0, 20.0, 20.0)
+        .add_line(RED, 2.0, 20.0, 20.0, 30.0, 30.0)
+        .add_line(BLUE, 3.0, 40.0, 40.0, 50.0, 50.0) // 異なる色
+        .to_vis_string("test");
+
+    assert!(output.contains("LINES"));
+    // グループ数は2つ（RED-2.0とBLUE-3.0）
+    let lines_section = output.split("LINES").nth(1).unwrap();
+    let first_line = lines_section.lines().nth(1).unwrap().trim();
+    assert_eq!(first_line, "2"); // 2グループ
+
+    // RED-2.0グループに3本の線が含まれることを確認
+    assert!(output.contains("#FF0000 2 3")); // color=RED, width=2.0, count=3
+    assert!(output.contains("0 0"));
+    assert!(output.contains("10 10"));
+    assert!(output.contains("20 20"));
+    assert!(output.contains("30 30"));
+
+    // BLUE-3.0グループに1本の線が含まれることを確認
+    assert!(output.contains("#0000FF 3 1")); // color=BLUE, width=3.0, count=1
+    assert!(output.contains("40 40"));
+    assert!(output.contains("50 50"));
 }
 
 #[cfg(feature = "vis")]
