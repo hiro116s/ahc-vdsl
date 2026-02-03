@@ -572,3 +572,77 @@ mod vis_disabled_tests {
         assert_eq!(Color::new(128, 128, 128).to_string(), "");
     }
 }
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_bar_graph_basic() {
+    let mut bar_graph = VisBarGraph::new(BLUE, 0.0, 100.0);
+    bar_graph.add_item("A".to_string(), 50.0);
+    bar_graph.add_item("B".to_string(), 75.0);
+
+    let output = bar_graph.to_vis_string("test");
+    assert!(output.contains("$v(test) BAR_GRAPH #0000FF 0 100"));
+    assert!(output.contains("2 A 50 B 75"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_bar_graph_add_items() {
+    let mut bar_graph = VisBarGraph::new(RED, -10.0, 10.0);
+    let items = vec![
+        BarGraphItem::new("X".to_string(), -5.0),
+        BarGraphItem::new("Y".to_string(), 0.0),
+        BarGraphItem::new("Z".to_string(), 7.5),
+    ];
+    bar_graph.add_items(items);
+
+    let output = bar_graph.to_vis_string("test");
+    assert!(output.contains("$v(test) BAR_GRAPH #FF0000 -10 10"));
+    assert!(output.contains("3 X -5 Y 0 Z 7.5"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_frame_add_bar_graph() {
+    let mut frame = VisFrame::new();
+    let mut bar_graph = VisBarGraph::new(GREEN, 0.0, 200.0);
+    bar_graph.add_item("Item1".to_string(), 100.0);
+    bar_graph.add_item("Item2".to_string(), 150.0);
+    frame.add_bar_graph(bar_graph);
+    frame.set_score("12345".to_string());
+
+    let output = frame.to_vis_string("main");
+    assert!(output.contains("$v(main) BAR_GRAPH #00FF00 0 200"));
+    assert!(output.contains("2 Item1 100 Item2 150"));
+    assert!(output.contains("$v(main) SCORE 12345"));
+    assert!(output.contains("$v(main) COMMIT"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_bar_graph_item_new() {
+    let item = BarGraphItem::new("TestLabel".to_string(), 42.5);
+    assert_eq!(item.label, "TestLabel");
+    assert_eq!(item.value, 42.5);
+}
+
+#[cfg(not(feature = "vis"))]
+mod bar_graph_disabled_tests {
+    use super::super::ahc_vdsl::ahc_vdsl::*;
+
+    #[test]
+    fn test_bar_graph_operations_compile() {
+        let mut bar_graph = VisBarGraph::new(RED, 0.0, 100.0);
+        bar_graph.add_item("A".to_string(), 50.0);
+        bar_graph.add_items(vec![BarGraphItem::new("B".to_string(), 75.0)]);
+        let _ = bar_graph.to_vis_string("test");
+    }
+
+    #[test]
+    fn test_frame_add_bar_graph_compiles() {
+        let mut frame = VisFrame::new();
+        let bar_graph = VisBarGraph::new(GREEN, 0.0, 100.0);
+        frame.add_bar_graph(bar_graph);
+        let _ = frame.to_vis_string("test");
+    }
+}

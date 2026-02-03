@@ -114,6 +114,7 @@ pub mod ahc_vdsl {
             items: Vec<VisItem>,
             score: String,
             textarea: Vec<String>,
+            bar_graphs: Vec<VisBarGraph>,
             with_debug: bool,
         }
 
@@ -124,6 +125,7 @@ pub mod ahc_vdsl {
                     items: Vec::new(),
                     score: String::new(),
                     textarea: Vec::new(),
+                    bar_graphs: Vec::new(),
                     with_debug: false,
                 }
             }
@@ -150,6 +152,10 @@ pub mod ahc_vdsl {
 
             pub fn add_textarea(&mut self, text: String) {
                 self.textarea.push(text);
+            }
+
+            pub fn add_bar_graph(&mut self, bar_graph: VisBarGraph) {
+                self.bar_graphs.push(bar_graph);
             }
 
             pub fn enable_debug(&mut self) {
@@ -181,6 +187,11 @@ pub mod ahc_vdsl {
                 // Output textarea
                 for text in &self.textarea {
                     writeln!(&mut output, "$v({mode}) TEXTAREA {text}").unwrap();
+                }
+
+                // Output bar graphs
+                for bar_graph in &self.bar_graphs {
+                    output.push_str(&bar_graph.to_vis_string(mode));
                 }
 
                 // Output debug flag
@@ -293,10 +304,22 @@ pub mod ahc_vdsl {
             }
 
             pub fn add_line_group(&mut self, color: Color, width: f64, points: Vec<(f64, f64)>) {
-                self.line_groups.push(LineGroup { color, width, points });
+                self.line_groups.push(LineGroup {
+                    color,
+                    width,
+                    points,
+                });
             }
 
-            pub fn add_line(&mut self, color: Color, width: f64, ax: f64, ay: f64, bx: f64, by: f64) {
+            pub fn add_line(
+                &mut self,
+                color: Color,
+                width: f64,
+                ax: f64,
+                ay: f64,
+                bx: f64,
+                by: f64,
+            ) {
                 self.add_line_group(color, width, vec![(ax, ay), (bx, by)]);
             }
 
@@ -353,9 +376,16 @@ pub mod ahc_vdsl {
                     writeln!(&mut s, "LINES").unwrap();
                     writeln!(&mut s, "{}", self.line_groups.len()).unwrap();
                     for group in &self.line_groups {
-                        write!(&mut s, "{} {} {}", group.color, group.width, group.points.len()).unwrap();
+                        write!(
+                            &mut s,
+                            "{} {} {}",
+                            group.color,
+                            group.width,
+                            group.points.len()
+                        )
+                        .unwrap();
                         for (x, y) in &group.points {
-                            write!(&mut s, " {} {}", x, y).unwrap();
+                            write!(&mut s, " {x} {y}").unwrap();
                         }
                         writeln!(&mut s).unwrap();
                     }
@@ -615,6 +645,63 @@ pub mod ahc_vdsl {
                 VisGridConf::new(BLACK, BLACK, WHITE)
             }
         }
+
+        pub struct BarGraphItem {
+            pub label: String,
+            pub value: f64,
+        }
+
+        impl BarGraphItem {
+            pub fn new(label: String, value: f64) -> Self {
+                Self { label, value }
+            }
+        }
+
+        pub struct VisBarGraph {
+            fill_color: Color,
+            y_min: f64,
+            y_max: f64,
+            items: Vec<BarGraphItem>,
+        }
+
+        impl VisBarGraph {
+            pub fn new(fill_color: Color, y_min: f64, y_max: f64) -> Self {
+                Self {
+                    fill_color,
+                    y_min,
+                    y_max,
+                    items: Vec::new(),
+                }
+            }
+
+            pub fn add_item(&mut self, label: String, value: f64) {
+                self.items.push(BarGraphItem::new(label, value));
+            }
+
+            pub fn add_items(&mut self, items: Vec<BarGraphItem>) {
+                self.items.extend(items);
+            }
+
+            pub fn to_vis_string(&self, mode: &str) -> String {
+                let mut s = String::new();
+
+                writeln!(
+                    &mut s,
+                    "$v({}) BAR_GRAPH {} {} {}",
+                    mode, self.fill_color, self.y_min, self.y_max
+                )
+                .unwrap();
+
+                // Output items count and data
+                write!(&mut s, "{}", self.items.len()).unwrap();
+                for item in &self.items {
+                    write!(&mut s, " {} {}", item.label, item.value).unwrap();
+                }
+                writeln!(&mut s).unwrap();
+
+                s
+            }
+        }
     }
 
     // ============================================================
@@ -703,6 +790,9 @@ pub mod ahc_vdsl {
 
             #[inline(always)]
             pub fn add_textarea(&mut self, _text: String) {}
+
+            #[inline(always)]
+            pub fn add_bar_graph(&mut self, _bar_graph: VisBarGraph) {}
 
             #[inline(always)]
             pub fn enable_debug(&mut self) {}
@@ -806,10 +896,20 @@ pub mod ahc_vdsl {
             }
 
             #[inline(always)]
-            pub fn add_line_group(&mut self, _color: Color, _width: f64, _points: Vec<(f64, f64)>) {}
+            pub fn add_line_group(&mut self, _color: Color, _width: f64, _points: Vec<(f64, f64)>) {
+            }
 
             #[inline(always)]
-            pub fn add_line(&mut self, _color: Color, _width: f64, _ax: f64, _ay: f64, _bx: f64, _by: f64) {}
+            pub fn add_line(
+                &mut self,
+                _color: Color,
+                _width: f64,
+                _ax: f64,
+                _ay: f64,
+                _bx: f64,
+                _by: f64,
+            ) {
+            }
 
             #[inline(always)]
             pub fn add_polygon(
@@ -937,6 +1037,37 @@ pub mod ahc_vdsl {
         pub const YELLOW: Color = Color;
         pub const CYAN: Color = Color;
         pub const MAGENTA: Color = Color;
+
+        // BarGraphItem - Zero-Sized Type
+        pub struct BarGraphItem;
+
+        impl BarGraphItem {
+            #[inline(always)]
+            pub fn new(_label: String, _value: f64) -> Self {
+                Self
+            }
+        }
+
+        // VisBarGraph - Zero-Sized Type
+        pub struct VisBarGraph;
+
+        impl VisBarGraph {
+            #[inline(always)]
+            pub fn new(_fill_color: Color, _y_min: f64, _y_max: f64) -> Self {
+                Self
+            }
+
+            #[inline(always)]
+            pub fn add_item(&mut self, _label: String, _value: f64) {}
+
+            #[inline(always)]
+            pub fn add_items(&mut self, _items: Vec<BarGraphItem>) {}
+
+            #[inline(always)]
+            pub fn to_vis_string(&self, _mode: &str) -> String {
+                String::new()
+            }
+        }
     }
 
     // Re-export based on feature flag

@@ -202,7 +202,36 @@ $v(main) COMMIT
 $v(MODE) TEXTAREA DebugInfo: ...
 ```
 
-### 5. スコア更新: `$v(MODE) SCORE`
+### 5. バーグラフ: `$v(MODE) BAR_GRAPH`
+
+画面右側の情報パネルにバーグラフを表示します。複数の値を視覚的に比較する際に便利です。
+
+**構文:**
+```text
+$v(MODE) BAR_GRAPH [fill_color] [y_min] [y_max]
+[n] [label1] [value1] [label2] [value2] ...
+```
+
+- `fill_color`: バーの塗りつぶし色（例: `#0000FF`, `blue`）
+- `y_min`: Y軸の最小値
+- `y_max`: Y軸の最大値
+- `n`: アイテム数
+- `label1`, `label2`, ...: 各バーのラベル
+- `value1`, `value2`, ...: 各バーの値
+
+**使用例:**
+```text
+$v(main) BAR_GRAPH #4169E1 0 100
+3 Speed 85.5 Accuracy 92.0 Coverage 78.3
+$v(main) COMMIT
+```
+
+**注意事項:**
+- 値がy_minより小さい場合やy_maxより大きい場合は、自動的にクランプされます
+- ラベルが長い場合は自動的に省略されますが、ツールチップで完全な名前を確認できます
+- 各バーの上に値が表示されます
+
+### 6. スコア更新: `$v(MODE) SCORE`
 
 画面上部の「Score = ...」の表示を更新します。
 
@@ -210,7 +239,7 @@ $v(MODE) TEXTAREA DebugInfo: ...
 $v(MODE) SCORE 12345
 ```
 
-### 6. デバッグ表示: `$v(MODE) DEBUG`
+### 7. デバッグ表示: `$v(MODE) DEBUG`
 
 このコマンドが含まれるフレームでは、そのフレームを構成するために出力された生のコマンド文字列を、ビジュアライザの右側に追加表示します。デバッグ用途に便利です。
 
@@ -222,47 +251,55 @@ $v(MODE) DEBUG
 
 ## 2D_PLANE コマンドの使用例
 
-```rust
-// 100x100の2次元平面を設定
-eprintln!("$v(main) 2D_PLANE 100 100");
+```text
+# 100x100の2次元平面を設定
+$v(main) 2D_PLANE 100 100
 
-// 円を描画
-eprintln!("CIRCLES");
-eprintln!("2");  // 2グループの円
-eprintln!("red blue 2 50 50 10 70 30 5");  // 赤い線、青い塗り、2つの円
-eprintln!("green yellow 1 25 75 8");  // 緑の線、黄色い塗り、1つの円
+# 円を描画
+CIRCLES
+2
+red blue 2 50 50 10 70 30 5
+green yellow 1 25 75 8
 
-// 線を描画
-eprintln!("LINES");
-eprintln!("1");  // 1グループの線
-eprintln!("black 3 0 0 100 100 0 100 100 0 50 0 50 100");  // 黒い線3本
+# 線を描画
+LINES
+1
+black 2 2 0 0 100 100
 
-// 多角形を描画
-eprintln!("POLYGONS");
-eprintln!("1");  // 1つの多角形
-eprintln!("purple pink 4 10 10 90 10 90 90 10 90");  // 紫の線、ピンクの塗り、四角形
+# 多角形を描画
+POLYGONS
+1
+purple pink 4 10 10 90 10 90 90 10 90
 
-// フレームを確定
-eprintln!("$v(main) COMMIT");
+# フレームを確定
+$v(main) COMMIT
 ```
 
 ---
 
-## 実装例 (Rust)
+## 使用例
 
-```rust
-// メインモードでグリッド初期化
-eprintln!("$v(main) GRID 30 30 #ddd black white");
+```text
+# メインモードでグリッド初期化
+$v(main) GRID 30 30 #ddd black white
+CELL_COLORS_POS
+0
+CELL_TEXT
 
-// サブモードで別の情報を表示
-eprintln!("$v(debug) TEXTAREA Start Processing...");
+LINES
+0
 
-// デバッグ表示を有効にする
-eprintln!("$v(main) DEBUG");
+# サブモードで別の情報を表示
+$v(debug) TEXTAREA Start Processing...
 
-// ... 処理 ...
+# バーグラフでスコアの内訳を表示
+$v(main) BAR_GRAPH #4169E1 0 100
+3 Speed 85.5 Accuracy 92.0 Coverage 78.3
 
-// メインモードのフレーム更新
-eprintln!("$v(main) SCORE {}", score);
-eprintln!("$v(main) COMMIT");
+# デバッグ表示を有効にする
+$v(main) DEBUG
+
+# メインモードのフレーム更新
+$v(main) SCORE 12345
+$v(main) COMMIT
 ```
