@@ -122,7 +122,20 @@ export interface CanvasCommand {
     W: number;
 }
 
-export type Command = CanvasCommand | GridCommand | TextAreaCommand | ScoreCommand | DebugCommand | TwoDPlaneCommand;
+export interface BarGraphItem {
+    label: string;
+    value: number;
+}
+
+export interface BarGraphCommand {
+    type: 'BAR_GRAPH';
+    fillColor: string;
+    yMin: number;
+    yMax: number;
+    items: BarGraphItem[];
+}
+
+export type Command = CanvasCommand | GridCommand | TextAreaCommand | ScoreCommand | DebugCommand | TwoDPlaneCommand | BarGraphCommand;
 
 export interface Frame {
     commands: Command[];

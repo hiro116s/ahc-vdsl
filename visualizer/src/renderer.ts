@@ -1,4 +1,4 @@
-import { GridCommand, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup } from './types';
+import { GridCommand, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, BarGraphCommand } from './types';
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -380,4 +380,129 @@ export function render2DPlaneFromCommand(svg: SVGSVGElement, cmd: TwoDPlaneComma
         bounds.right,
         bounds.bottom
     );
+}
+
+function formatNumber(value: number): string {
+    if (Math.abs(value - Math.round(value)) < 1e-9) return String(Math.round(value));
+    return parseFloat(value.toFixed(2)).toString();
+}
+
+export function renderBarGraph(container: HTMLElement, cmd: BarGraphCommand): void {
+    const { fillColor, yMin, yMax, items } = cmd;
+    if (items.length === 0) return;
+
+    const totalWidth = 330;
+    const paddingLeft = 55;
+    const paddingRight = 10;
+    const paddingTop = 25;
+    const paddingBottom = 40;
+
+    const chartWidth = totalWidth - paddingLeft - paddingRight;
+    const chartHeight = 135;
+    const totalHeight = paddingTop + chartHeight + paddingBottom;
+
+    const barGroupWidth = chartWidth / items.length;
+    const barWidth = Math.min(80, barGroupWidth * 0.7);
+
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("width", String(totalWidth));
+    svg.setAttribute("height", String(totalHeight));
+    svg.setAttribute("viewBox", `0 0 ${totalWidth} ${totalHeight}`);
+    svg.style.display = "block";
+
+    // Background
+    const bg = document.createElementNS(SVG_NS, "rect");
+    bg.setAttribute("x", "0");
+    bg.setAttribute("y", "0");
+    bg.setAttribute("width", String(totalWidth));
+    bg.setAttribute("height", String(totalHeight));
+    bg.setAttribute("fill", "#fafafa");
+    bg.setAttribute("stroke", "#ddd");
+    bg.setAttribute("stroke-width", "1");
+    bg.setAttribute("rx", "4");
+    svg.appendChild(bg);
+
+    // Y-axis gridlines and labels
+    const numTicks = 5;
+    for (let i = 0; i <= numTicks; i++) {
+        const value = yMin + (yMax - yMin) * (i / numTicks);
+        const y = paddingTop + chartHeight * (1 - i / numTicks);
+
+        const line = document.createElementNS(SVG_NS, "line");
+        line.setAttribute("x1", String(paddingLeft));
+        line.setAttribute("y1", String(y));
+        line.setAttribute("x2", String(totalWidth - paddingRight));
+        line.setAttribute("y2", String(y));
+        line.setAttribute("stroke", (i === 0 || i === numTicks) ? "#bbb" : "#eee");
+        line.setAttribute("stroke-width", "1");
+        svg.appendChild(line);
+
+        const text = document.createElementNS(SVG_NS, "text");
+        text.setAttribute("x", String(paddingLeft - 5));
+        text.setAttribute("y", String(y));
+        text.setAttribute("text-anchor", "end");
+        text.setAttribute("dominant-baseline", "middle");
+        text.setAttribute("font-size", "11");
+        text.setAttribute("font-family", "sans-serif");
+        text.setAttribute("fill", "#666");
+        text.textContent = formatNumber(value);
+        svg.appendChild(text);
+    }
+
+    // Bars and labels
+    const labelFontSize = items.length > 8 ? 9 : 11;
+    const maxLabelLen = items.length > 8 ? 4 : 6;
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const clampedValue = Math.max(yMin, Math.min(yMax, item.value));
+        const barHeight = chartHeight * ((clampedValue - yMin) / (yMax - yMin));
+        const x = paddingLeft + i * barGroupWidth + (barGroupWidth - barWidth) / 2;
+        const y = paddingTop + chartHeight - barHeight;
+
+        // Bar
+        const rect = document.createElementNS(SVG_NS, "rect");
+        rect.setAttribute("x", String(x));
+        rect.setAttribute("y", String(y));
+        rect.setAttribute("width", String(barWidth));
+        rect.setAttribute("height", String(Math.max(0, barHeight)));
+        rect.setAttribute("fill", fillColor);
+        rect.setAttribute("rx", "2");
+
+        const title = document.createElementNS(SVG_NS, "title");
+        title.textContent = `${item.label}: ${item.value}`;
+        rect.appendChild(title);
+        svg.appendChild(rect);
+
+        // Value label above bar
+        const valText = document.createElementNS(SVG_NS, "text");
+        valText.setAttribute("x", String(x + barWidth / 2));
+        valText.setAttribute("y", String(y - 4));
+        valText.setAttribute("text-anchor", "middle");
+        valText.setAttribute("font-size", "11");
+        valText.setAttribute("font-family", "sans-serif");
+        valText.setAttribute("fill", "#333");
+        valText.textContent = formatNumber(item.value);
+        svg.appendChild(valText);
+
+        // X-axis label
+        const displayLabel = item.label.length > maxLabelLen
+            ? item.label.substring(0, maxLabelLen - 1) + "..."
+            : item.label;
+        const labelText = document.createElementNS(SVG_NS, "text");
+        labelText.setAttribute("x", String(x + barWidth / 2));
+        labelText.setAttribute("y", String(paddingTop + chartHeight + 18));
+        labelText.setAttribute("text-anchor", "middle");
+        labelText.setAttribute("font-size", String(labelFontSize));
+        labelText.setAttribute("font-family", "sans-serif");
+        labelText.setAttribute("fill", "#333");
+        labelText.textContent = displayLabel;
+
+        const labelTitle = document.createElementNS(SVG_NS, "title");
+        labelTitle.textContent = item.label;
+        labelText.appendChild(labelTitle);
+        svg.appendChild(labelText);
+    }
+
+    container.appendChild(svg);
 }
