@@ -1,0 +1,31 @@
+{
+  "name": "AHC-VDSL",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/dev/.ssh,type=bind,readonly",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/dev/.gitconfig,type=bind,readonly"
+  ],
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "Visualizer Dev Server",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "cd /workspace/visualizer && npm install",
+  "remoteUser": "dev",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "ms-vscode.cpptools"
+      ],
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/zsh",
+        "rust-analyzer.checkOnSave.command": "clippy"
+      }
+    }
+  }
+}
