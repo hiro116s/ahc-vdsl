@@ -257,7 +257,8 @@ class Vis2DPlane {
 
     struct LineGroup {
         Color color;
-        std::vector<std::tuple<double, double, double, double>> lines; // ax, ay, bx, by
+        double width;
+        std::vector<std::pair<double, double>> points; // polyline vertices
     };
 
     struct PolygonGroup {
@@ -311,8 +312,13 @@ public:
         circle_groups.push_back({stroke_color, fill_color, {{x, y, r}}});
     }
 
-    void add_line(Color color, double ax, double ay, double bx, double by) {
-        line_groups.push_back({color, {{ax, ay, bx, by}}});
+    void add_line(Color color, double width, double ax, double ay, double bx, double by) {
+        line_groups.push_back({color, width, {{ax, ay}, {bx, by}}});
+    }
+
+    void add_line_group(Color color, double width,
+                        const std::vector<std::pair<double, double>>& points) {
+        line_groups.push_back({color, width, points});
     }
 
     void add_polygon(Color stroke_color, Color fill_color,
@@ -353,9 +359,9 @@ public:
             ss << "LINES\n";
             ss << line_groups.size() << "\n";
             for (const auto& group : line_groups) {
-                ss << group.color.to_string() << " " << group.lines.size();
-                for (const auto& [ax, ay, bx, by] : group.lines) {
-                    ss << " " << ax << " " << ay << " " << bx << " " << by;
+                ss << group.color.to_string() << " " << group.width << " " << group.points.size();
+                for (const auto& [x, y] : group.points) {
+                    ss << " " << x << " " << y;
                 }
                 ss << "\n";
             }
@@ -671,7 +677,8 @@ public:
     Vis2DPlane(double = 0, double = 0) {}
     Vis2DPlane(double, double, const ItemBounds&) {}
     void add_circle(Color, Color, double, double, double) {}
-    void add_line(Color, double, double, double, double) {}
+    void add_line(Color, double, double, double, double, double) {}
+    void add_line_group(Color, double, const std::vector<std::pair<double, double>>&) {}
     void add_polygon(Color, Color, const std::vector<std::pair<double, double>>&) {}
     void set_bounds(const ItemBounds&) {}
     std::string to_vis_string(const std::string&) const { return ""; }

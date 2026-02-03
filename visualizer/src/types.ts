@@ -84,13 +84,6 @@ export interface Circle {
     r: number;
 }
 
-export interface Line2D {
-    ax: number;
-    ay: number;
-    bx: number;
-    by: number;
-}
-
 export interface Polygon {
     points: Point[];
 }
@@ -103,7 +96,8 @@ export interface CircleGroup {
 
 export interface LineGroup {
     color: string;
-    lines: Line2D[];
+    width: number;
+    points: Point[];
 }
 
 export interface PolygonGroup {
