@@ -1,4 +1,4 @@
-import { ParsedModes, Frame, GridCommand, Command, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, CanvasCommand, ItemBounds } from './types';
+import { ParsedModes, Frame, GridCommand, Command, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, CanvasCommand, ItemBounds, BarGraphCommand, BarGraphItem } from './types';
 
 interface PendingCommands {
     [mode: string]: Command[];
@@ -120,6 +120,9 @@ export function parseStderr(stderrText: string): ParsedModes {
             lineIdx = result.lineIdx;
         } else if (cmd === '2D_PLANE' || cmd.startsWith('2D_PLANE(')) {
             const result = parse2DPlaneCommand(lines, lineIdx, remaining, mode, pendingRawText, pendingCommands, pendingErrors);
+            lineIdx = result.lineIdx;
+        } else if (cmd === 'BAR_GRAPH') {
+            const result = parseBarGraphCommand(lines, lineIdx, remaining, mode, pendingRawText, pendingCommands, pendingErrors);
             lineIdx = result.lineIdx;
         } else {
             // Unknown command
@@ -596,5 +599,84 @@ function parse2DPlaneCommand(
     };
 
     pendingCommands[mode].push(twoDPlaneCommand);
+    return { lineIdx };
+}
+
+function parseBarGraphCommand(
+    lines: string[],
+    lineIdx: number,
+    remaining: string,
+    mode: string,
+    pendingRawText: PendingRawText,
+    pendingCommands: PendingCommands,
+    pendingErrors: PendingErrors
+): { lineIdx: number } {
+    const paramStr = remaining.replace(/^BAR_GRAPH\s*/, '').trim();
+    const parts = paramStr.split(/\s+/);
+
+    if (parts.length < 3) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: BAR_GRAPH requires 3 parameters (fill_color y_min y_max), got ${parts.length}`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    const fillColor = parts[0];
+    const yMin = parseFloat(parts[1]);
+    const yMax = parseFloat(parts[2]);
+
+    if (isNaN(yMin) || isNaN(yMax)) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: BAR_GRAPH y_min and y_max must be numbers`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    if (yMin >= yMax) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: BAR_GRAPH y_min must be less than y_max`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    lineIdx++;
+
+    if (lineIdx >= lines.length) {
+        pendingErrors[mode].push(`Line ${lineIdx}: BAR_GRAPH expected data line but reached end of input`);
+        return { lineIdx };
+    }
+
+    pendingRawText[mode] += lines[lineIdx] + "\n";
+    const dataLine = lines[lineIdx].trim();
+    const dataParts = dataLine.split(/\s+/);
+
+    const n = parseInt(dataParts[0]);
+    if (isNaN(n) || n <= 0) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: BAR_GRAPH data count must be a positive integer`);
+        return { lineIdx: lineIdx + 1 };
+    }
+
+    const items: BarGraphItem[] = [];
+    for (let i = 0; i < n; i++) {
+        const labelIdx = 1 + i * 2;
+        const valueIdx = 2 + i * 2;
+        if (valueIdx >= dataParts.length) {
+            pendingErrors[mode].push(`Line ${lineIdx + 1}: BAR_GRAPH expected ${n} items but data ended at item ${i}`);
+            break;
+        }
+        const label = dataParts[labelIdx];
+        const value = parseFloat(dataParts[valueIdx]);
+        if (isNaN(value)) {
+            pendingErrors[mode].push(`Line ${lineIdx + 1}: BAR_GRAPH value for '${label}' is not a number`);
+            continue;
+        }
+        items.push({ label, value });
+    }
+
+    lineIdx++;
+
+    const barGraphCommand: BarGraphCommand = {
+        type: 'BAR_GRAPH',
+        fillColor,
+        yMin,
+        yMax,
+        items
+    };
+
+    pendingCommands[mode].push(barGraphCommand);
     return { lineIdx };
 }

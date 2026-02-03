@@ -1,7 +1,7 @@
 import './styles.css';
-import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand, CanvasCommand } from './types';
+import { ParsedModes, Frame, GridCommand, TwoDPlaneCommand, CanvasCommand, BarGraphCommand } from './types';
 import { parseStderr } from './parser';
-import { createCanvasSvg, renderGridFromCommand, render2DPlaneFromCommand } from './renderer';
+import { createCanvasSvg, renderGridFromCommand, render2DPlaneFromCommand, renderBarGraph } from './renderer';
 import { initSamplesPage } from './samples';
 import { getBasePath } from './utils';
 
@@ -588,6 +588,8 @@ function initMainPage(): void {
                 ta.readOnly = true;
                 ta.value = cmd.text;
                 infoDiv.appendChild(ta);
+            } else if (cmd.type === 'BAR_GRAPH') {
+                renderBarGraph(infoDiv, cmd as BarGraphCommand);
             } else if (cmd.type === 'SCORE') {
                 scoreDisplay.textContent = `Score = ${cmd.score}`;
             }
