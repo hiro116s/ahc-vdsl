@@ -1,0 +1,49 @@
+{
+  "enabledPlugins": {
+    "rust-analyzer-lsp@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+
+      "Bash(git:*)",
+      "Bash(gh:*)",
+
+      "Bash(cargo:*)",
+      "Bash(rustup:*)",
+      "Bash(rustfmt:*)",
+      "Bash(clippy:*)",
+
+      "Bash(g++:*)",
+      "Bash(make:*)",
+      "Bash(gcc:*)",
+
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(sort:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(diff:*)",
+      "Bash(xargs:*)",
+      "Bash(lsof:*)",
+
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(ln:*)",
+      "Bash(chmod:*)",
+      "Bash(touch:*)"
+    ]
+  }
+}
