@@ -152,11 +152,11 @@ fn test_vis2dplane_add_circle() {
 #[test]
 fn test_vis2dplane_add_line() {
     let mut plane = Vis2DPlane::new(100.0, 100.0, None);
-    plane.add_line(GREEN, 0.0, 0.0, 100.0, 100.0);
+    plane.add_line(GREEN, 2.0, 0.0, 0.0, 100.0, 100.0);
     let output = plane.to_vis_string("test");
     assert!(output.contains("LINES"));
     assert!(output.contains("#00FF00")); // GREEN
-    assert!(output.contains("0 0 100 100"));
+    assert!(output.contains("2 2 0 0 100 100"));
 }
 
 #[cfg(feature = "vis")]
@@ -469,7 +469,7 @@ mod vis_disabled_tests {
     fn test_vis2dplane_operations_compile() {
         let mut plane = Vis2DPlane::new(100.0, 100.0, None);
         plane.add_circle(RED, BLUE, 50.0, 50.0, 10.0);
-        plane.add_line(GREEN, 0.0, 0.0, 100.0, 100.0);
+        plane.add_line(GREEN, 2.0, 0.0, 0.0, 100.0, 100.0);
         plane.add_polygon(
             RED,
             YELLOW,

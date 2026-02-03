@@ -242,14 +242,8 @@ pub mod ahc_vdsl {
 
         pub struct LineGroup {
             color: Color,
-            lines: Vec<Line>,
-        }
-
-        pub struct Line {
-            ax: f64,
-            ay: f64,
-            bx: f64,
-            by: f64,
+            width: f64,
+            points: Vec<(f64, f64)>,
         }
 
         pub struct PolygonGroup {
@@ -298,12 +292,12 @@ pub mod ahc_vdsl {
                 self.add_circle_group(stroke_color, fill_color, vec![Circle { x, y, r }]);
             }
 
-            pub fn add_line_group(&mut self, color: Color, lines: Vec<Line>) {
-                self.line_groups.push(LineGroup { color, lines });
+            pub fn add_line_group(&mut self, color: Color, width: f64, points: Vec<(f64, f64)>) {
+                self.line_groups.push(LineGroup { color, width, points });
             }
 
-            pub fn add_line(&mut self, color: Color, ax: f64, ay: f64, bx: f64, by: f64) {
-                self.add_line_group(color, vec![Line { ax, ay, bx, by }]);
+            pub fn add_line(&mut self, color: Color, width: f64, ax: f64, ay: f64, bx: f64, by: f64) {
+                self.add_line_group(color, width, vec![(ax, ay), (bx, by)]);
             }
 
             pub fn add_polygon(
@@ -359,10 +353,9 @@ pub mod ahc_vdsl {
                     writeln!(&mut s, "LINES").unwrap();
                     writeln!(&mut s, "{}", self.line_groups.len()).unwrap();
                     for group in &self.line_groups {
-                        write!(&mut s, "{} {}", group.color, group.lines.len()).unwrap();
-                        for line in &group.lines {
-                            write!(&mut s, " {} {} {} {}", line.ax, line.ay, line.bx, line.by)
-                                .unwrap();
+                        write!(&mut s, "{} {} {}", group.color, group.width, group.points.len()).unwrap();
+                        for (x, y) in &group.points {
+                            write!(&mut s, " {} {}", x, y).unwrap();
                         }
                         writeln!(&mut s).unwrap();
                     }
@@ -813,10 +806,10 @@ pub mod ahc_vdsl {
             }
 
             #[inline(always)]
-            pub fn add_line_group(&mut self, _color: Color, _lines: Vec<Line>) {}
+            pub fn add_line_group(&mut self, _color: Color, _width: f64, _points: Vec<(f64, f64)>) {}
 
             #[inline(always)]
-            pub fn add_line(&mut self, _color: Color, _ax: f64, _ay: f64, _bx: f64, _by: f64) {}
+            pub fn add_line(&mut self, _color: Color, _width: f64, _ax: f64, _ay: f64, _bx: f64, _by: f64) {}
 
             #[inline(always)]
             pub fn add_polygon(

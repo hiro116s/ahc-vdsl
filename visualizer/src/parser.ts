@@ -529,24 +529,23 @@ function parse2DPlaneCommand(
                     pendingRawText[mode] += lines[lineIdx] + "\n";
                     const lLine = lines[lineIdx].trim();
                     const lParts = lLine.split(/\s+/);
-                    if (lParts.length >= 2) {
+                    if (lParts.length >= 3) {
                         const color = lParts[0];
-                        const lineCount = parseInt(lParts[1]);
-                        const lines2D = [];
-                        for (let j = 0; j < lineCount; j++) {
-                            const baseIdx = 2 + j * 4;
-                            if (baseIdx + 3 < lParts.length) {
-                                const ax = parseFloat(lParts[baseIdx]);
-                                const ay = parseFloat(lParts[baseIdx + 1]);
-                                const bx = parseFloat(lParts[baseIdx + 2]);
-                                const by = parseFloat(lParts[baseIdx + 3]);
-                                if (!isNaN(ax) && !isNaN(ay) && !isNaN(bx) && !isNaN(by)) {
-                                    lines2D.push({ ax, ay, bx, by });
+                        const width = parseFloat(lParts[1]);
+                        const vertexCount = parseInt(lParts[2]);
+                        const points = [];
+                        for (let j = 0; j < vertexCount; j++) {
+                            const baseIdx = 3 + j * 2;
+                            if (baseIdx + 1 < lParts.length) {
+                                const x = parseFloat(lParts[baseIdx]);
+                                const y = parseFloat(lParts[baseIdx + 1]);
+                                if (!isNaN(x) && !isNaN(y)) {
+                                    points.push({ x, y });
                                 }
                             }
                         }
-                        if (lines2D.length > 0) {
-                            lineGroups.push({ color, lines: lines2D });
+                        if (points.length > 0) {
+                            lineGroups.push({ color, width: isNaN(width) ? 2 : width, points });
                         }
                     }
                     lineIdx++;

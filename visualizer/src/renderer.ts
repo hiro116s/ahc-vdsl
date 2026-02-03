@@ -317,24 +317,24 @@ export function render2DPlane(
 
     // Render lines
     for (const lineGroup of lineGroups) {
-        const { color, lines } = lineGroup;
+        const { color, width, points } = lineGroup;
+        if (points.length < 2) continue;
 
-        for (const line of lines) {
-            const x1 = (line.ax / W) * drawWidth;
-            const y1 = (line.ay / H) * drawHeight;
-            const x2 = (line.bx / W) * drawWidth;
-            const y2 = (line.by / H) * drawHeight;
-
-            const lineElement = document.createElementNS(SVG_NS, "line");
-            lineElement.setAttribute("x1", String(x1));
-            lineElement.setAttribute("y1", String(y1));
-            lineElement.setAttribute("x2", String(x2));
-            lineElement.setAttribute("y2", String(y2));
-            lineElement.setAttribute("stroke", color);
-            lineElement.setAttribute("stroke-width", "2");
-            lineElement.setAttribute("stroke-linecap", "round");
-            g.appendChild(lineElement);
+        let pointsStr = "";
+        for (const pt of points) {
+            const px = (pt.x / W) * drawWidth;
+            const py = (pt.y / H) * drawHeight;
+            pointsStr += `${px},${py} `;
         }
+
+        const polyline = document.createElementNS(SVG_NS, "polyline");
+        polyline.setAttribute("points", pointsStr.trim());
+        polyline.setAttribute("fill", "none");
+        polyline.setAttribute("stroke", color);
+        polyline.setAttribute("stroke-width", String(width));
+        polyline.setAttribute("stroke-linejoin", "round");
+        polyline.setAttribute("stroke-linecap", "round");
+        g.appendChild(polyline);
     }
 
     // Render circles
