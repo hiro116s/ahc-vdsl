@@ -39,14 +39,16 @@ pub mod ahc_vdsl {
                 }
             }
 
-            pub fn add_frame(&mut self, mode: &str, frame: VisFrame) {
+            pub fn add_frame(&mut self, mode: &str, frame: VisFrame) -> &mut Self {
                 let frames = self.fames_by_mode.entry(mode.to_string()).or_default();
                 frames.push(frame);
+                self
             }
 
-            pub fn add_frames(&mut self, mode: &str, mut frames: Vec<VisFrame>) {
+            pub fn add_frames(&mut self, mode: &str, mut frames: Vec<VisFrame>) -> &mut Self {
                 let existing_frames = self.fames_by_mode.entry(mode.to_string()).or_default();
                 existing_frames.append(&mut frames);
+                self
             }
 
             pub fn get_frames(&self, mode: &str) -> Option<&Vec<VisFrame>> {
@@ -130,40 +132,49 @@ pub mod ahc_vdsl {
                 }
             }
 
-            pub fn set_canvas(&mut self, canvas: VisCanvas) {
+            pub fn set_canvas(mut self, canvas: VisCanvas) -> Self {
                 self.vis_canvas = Some(canvas);
+                self
             }
 
-            pub fn add_grid(&mut self, grid: VisGrid) {
+            pub fn add_grid(mut self, grid: VisGrid) -> Self {
                 self.items.push(VisItem::Grid(grid));
+                self
             }
 
-            pub fn add_2d_plane(&mut self, plane: Vis2DPlane) {
+            pub fn add_2d_plane(mut self, plane: Vis2DPlane) -> Self {
                 self.items.push(VisItem::Plane(plane));
+                self
             }
 
-            pub fn add_item(&mut self, item: VisItem) {
+            pub fn add_item(mut self, item: VisItem) -> Self {
                 self.items.push(item);
+                self
             }
 
-            pub fn set_score(&mut self, score: String) {
+            pub fn set_score(mut self, score: String) -> Self {
                 self.score = score;
+                self
             }
 
-            pub fn add_textarea(&mut self, text: String) {
+            pub fn add_textarea(mut self, text: String) -> Self {
                 self.textarea.push(text);
+                self
             }
 
-            pub fn add_bar_graph(&mut self, bar_graph: VisBarGraph) {
+            pub fn add_bar_graph(mut self, bar_graph: VisBarGraph) -> Self {
                 self.bar_graphs.push(bar_graph);
+                self
             }
 
-            pub fn enable_debug(&mut self) {
+            pub fn enable_debug(mut self) -> Self {
                 self.with_debug = true;
+                self
             }
 
-            pub fn disable_debug(&mut self) {
+            pub fn disable_debug(mut self) -> Self {
                 self.with_debug = false;
+                self
             }
 
             pub fn to_vis_string(&self, mode: &str) -> String {
@@ -275,65 +286,74 @@ pub mod ahc_vdsl {
                 }
             }
 
-            pub fn set_bounds(&mut self, bounds: ItemBounds) {
+            pub fn set_bounds(mut self, bounds: ItemBounds) -> Self {
                 self.bounds = Some(bounds);
+                self
             }
 
             pub fn add_circle_group(
-                &mut self,
+                mut self,
                 stroke_color: Color,
                 fill_color: Color,
                 circles: Vec<Circle>,
-            ) {
+            ) -> Self {
                 self.circle_groups.push(CircleGroup {
                     stroke_color,
                     fill_color,
                     circles,
                 });
+                self
             }
 
             pub fn add_circle(
-                &mut self,
+                self,
                 stroke_color: Color,
                 fill_color: Color,
                 x: f64,
                 y: f64,
                 r: f64,
-            ) {
-                self.add_circle_group(stroke_color, fill_color, vec![Circle { x, y, r }]);
+            ) -> Self {
+                self.add_circle_group(stroke_color, fill_color, vec![Circle { x, y, r }])
             }
 
-            pub fn add_line_group(&mut self, color: Color, width: f64, points: Vec<(f64, f64)>) {
+            pub fn add_line_group(
+                mut self,
+                color: Color,
+                width: f64,
+                points: Vec<(f64, f64)>,
+            ) -> Self {
                 self.line_groups.push(LineGroup {
                     color,
                     width,
                     points,
                 });
+                self
             }
 
             pub fn add_line(
-                &mut self,
+                self,
                 color: Color,
                 width: f64,
                 ax: f64,
                 ay: f64,
                 bx: f64,
                 by: f64,
-            ) {
-                self.add_line_group(color, width, vec![(ax, ay), (bx, by)]);
+            ) -> Self {
+                self.add_line_group(color, width, vec![(ax, ay), (bx, by)])
             }
 
             pub fn add_polygon(
-                &mut self,
+                mut self,
                 stroke_color: Color,
                 fill_color: Color,
                 vertices: Vec<(f64, f64)>,
-            ) {
+            ) -> Self {
                 self.polygon_groups.push(PolygonGroup {
                     stroke_color,
                     fill_color,
                     vertices,
                 });
+                self
             }
 
             pub fn to_vis_string(&self, mode: &str) -> String {
@@ -442,36 +462,44 @@ pub mod ahc_vdsl {
                 }
             }
 
-            pub fn set_bounds(&mut self, bounds: ItemBounds) {
+            pub fn set_bounds(mut self, bounds: ItemBounds) -> Self {
                 self.bounds = Some(bounds);
+                self
             }
 
-            pub fn update_cell_color(&mut self, p: (usize, usize), color: Color) {
+            pub fn update_cell_color(mut self, p: (usize, usize), color: Color) -> Self {
                 self.cell_colors[p.1][p.0] = color;
+                self
             }
 
-            pub fn update_text(&mut self, p: (usize, usize), text: String) {
+            pub fn update_text(mut self, p: (usize, usize), text: String) -> Self {
                 self.cell_texts[p.1][p.0] = text;
+                self
             }
 
-            pub fn add_line(&mut self, line: Vec<(usize, usize)>, color: Color) {
+            pub fn add_line(mut self, line: Vec<(usize, usize)>, color: Color) -> Self {
                 self.lines.push((line, color));
+                self
             }
 
-            pub fn remove_wall_vertical(&mut self, p: (usize, usize)) {
+            pub fn remove_wall_vertical(mut self, p: (usize, usize)) -> Self {
                 self.no_wall_vertical_pos.insert(p);
+                self
             }
 
-            pub fn add_wall_vertical(&mut self, p: (usize, usize)) {
+            pub fn add_wall_vertical(mut self, p: (usize, usize)) -> Self {
                 self.no_wall_vertical_pos.remove(&p);
+                self
             }
 
-            pub fn remove_wall_horizontal(&mut self, p: (usize, usize)) {
+            pub fn remove_wall_horizontal(mut self, p: (usize, usize)) -> Self {
                 self.no_wall_horizontal_pos.insert(p);
+                self
             }
 
-            pub fn add_wall_horizontal(&mut self, p: (usize, usize)) {
+            pub fn add_wall_horizontal(mut self, p: (usize, usize)) -> Self {
                 self.no_wall_horizontal_pos.remove(&p);
+                self
             }
 
             pub fn to_vis_string(&self, mode_name: &str) -> String {
@@ -674,12 +702,14 @@ pub mod ahc_vdsl {
                 }
             }
 
-            pub fn add_item(&mut self, label: String, value: f64) {
+            pub fn add_item(mut self, label: String, value: f64) -> Self {
                 self.items.push(BarGraphItem::new(label, value));
+                self
             }
 
-            pub fn add_items(&mut self, items: Vec<BarGraphItem>) {
+            pub fn add_items(mut self, items: Vec<BarGraphItem>) -> Self {
                 self.items.extend(items);
+                self
             }
 
             pub fn to_vis_string(&self, mode: &str) -> String {
@@ -740,10 +770,14 @@ pub mod ahc_vdsl {
             }
 
             #[inline(always)]
-            pub fn add_frame(&mut self, _mode: &str, _frame: VisFrame) {}
+            pub fn add_frame(&mut self, _mode: &str, _frame: VisFrame) -> &mut Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_frames(&mut self, _mode: &str, _frames: Vec<VisFrame>) {}
+            pub fn add_frames(&mut self, _mode: &str, _frames: Vec<VisFrame>) -> &mut Self {
+                self
+            }
 
             #[inline(always)]
             pub fn get_frames(&self, _mode: &str) -> Option<&Vec<VisFrame>> {
@@ -774,31 +808,49 @@ pub mod ahc_vdsl {
             }
 
             #[inline(always)]
-            pub fn set_canvas(&mut self, _canvas: VisCanvas) {}
+            pub fn set_canvas(self, _canvas: VisCanvas) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_grid(&mut self, _grid: VisGrid) {}
+            pub fn add_grid(self, _grid: VisGrid) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_2d_plane(&mut self, _plane: Vis2DPlane) {}
+            pub fn add_2d_plane(self, _plane: Vis2DPlane) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_item(&mut self, _item: VisItem) {}
+            pub fn add_item(self, _item: VisItem) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn set_score(&mut self, _score: String) {}
+            pub fn set_score(self, _score: String) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_textarea(&mut self, _text: String) {}
+            pub fn add_textarea(self, _text: String) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_bar_graph(&mut self, _bar_graph: VisBarGraph) {}
+            pub fn add_bar_graph(self, _bar_graph: VisBarGraph) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn enable_debug(&mut self) {}
+            pub fn enable_debug(self) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn disable_debug(&mut self) {}
+            pub fn disable_debug(self) -> Self {
+                self
+            }
 
             #[inline(always)]
             pub fn to_vis_string(&self, _mode: &str) -> String {
@@ -873,51 +925,63 @@ pub mod ahc_vdsl {
             }
 
             #[inline(always)]
-            pub fn set_bounds(&mut self, _bounds: ItemBounds) {}
+            pub fn set_bounds(self, _bounds: ItemBounds) -> Self {
+                self
+            }
 
             #[inline(always)]
             pub fn add_circle_group(
-                &mut self,
+                self,
                 _stroke_color: Color,
                 _fill_color: Color,
                 _circles: Vec<Circle>,
-            ) {
+            ) -> Self {
+                self
             }
 
             #[inline(always)]
             pub fn add_circle(
-                &mut self,
+                self,
                 _stroke_color: Color,
                 _fill_color: Color,
                 _x: f64,
                 _y: f64,
                 _r: f64,
-            ) {
+            ) -> Self {
+                self
             }
 
             #[inline(always)]
-            pub fn add_line_group(&mut self, _color: Color, _width: f64, _points: Vec<(f64, f64)>) {
+            pub fn add_line_group(
+                self,
+                _color: Color,
+                _width: f64,
+                _points: Vec<(f64, f64)>,
+            ) -> Self {
+                self
             }
 
             #[inline(always)]
             pub fn add_line(
-                &mut self,
+                self,
                 _color: Color,
                 _width: f64,
                 _ax: f64,
                 _ay: f64,
                 _bx: f64,
                 _by: f64,
-            ) {
+            ) -> Self {
+                self
             }
 
             #[inline(always)]
             pub fn add_polygon(
-                &mut self,
+                self,
                 _stroke_color: Color,
                 _fill_color: Color,
                 _vertices: Vec<(f64, f64)>,
-            ) {
+            ) -> Self {
+                self
             }
 
             #[inline(always)]
@@ -941,28 +1005,44 @@ pub mod ahc_vdsl {
             }
 
             #[inline(always)]
-            pub fn set_bounds(&mut self, _bounds: ItemBounds) {}
+            pub fn set_bounds(self, _bounds: ItemBounds) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn update_cell_color(&mut self, _p: (usize, usize), _color: Color) {}
+            pub fn update_cell_color(self, _p: (usize, usize), _color: Color) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn update_text(&mut self, _p: (usize, usize), _text: String) {}
+            pub fn update_text(self, _p: (usize, usize), _text: String) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_line(&mut self, _line: Vec<(usize, usize)>, _color: Color) {}
+            pub fn add_line(self, _line: Vec<(usize, usize)>, _color: Color) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn remove_wall_vertical(&mut self, _p: (usize, usize)) {}
+            pub fn remove_wall_vertical(self, _p: (usize, usize)) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_wall_vertical(&mut self, _p: (usize, usize)) {}
+            pub fn add_wall_vertical(self, _p: (usize, usize)) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn remove_wall_horizontal(&mut self, _p: (usize, usize)) {}
+            pub fn remove_wall_horizontal(self, _p: (usize, usize)) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_wall_horizontal(&mut self, _p: (usize, usize)) {}
+            pub fn add_wall_horizontal(self, _p: (usize, usize)) -> Self {
+                self
+            }
 
             #[inline(always)]
             pub fn from_cells<T>(_cell_texts: &[Vec<T>]) -> Self
@@ -1058,10 +1138,14 @@ pub mod ahc_vdsl {
             }
 
             #[inline(always)]
-            pub fn add_item(&mut self, _label: String, _value: f64) {}
+            pub fn add_item(self, _label: String, _value: f64) -> Self {
+                self
+            }
 
             #[inline(always)]
-            pub fn add_items(&mut self, _items: Vec<BarGraphItem>) {}
+            pub fn add_items(self, _items: Vec<BarGraphItem>) -> Self {
+                self
+            }
 
             #[inline(always)]
             pub fn to_vis_string(&self, _mode: &str) -> String {

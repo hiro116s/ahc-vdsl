@@ -27,30 +27,27 @@ fn test_visgrid_with_bounds() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_update_cell_color() {
-    let mut grid = VisGrid::new(3, 3, None);
-    grid.update_cell_color((1, 1), RED);
-
-    let output = grid.to_vis_string("test");
+    let output = VisGrid::new(3, 3, None)
+        .update_cell_color((1, 1), RED)
+        .to_vis_string("test");
     assert!(output.contains("#FF0000"));
 }
 
 #[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_update_text() {
-    let mut grid = VisGrid::new(3, 3, None);
-    grid.update_text((1, 1), "hello".to_string());
-
-    let output = grid.to_vis_string("test");
+    let output = VisGrid::new(3, 3, None)
+        .update_text((1, 1), "hello".to_string())
+        .to_vis_string("test");
     assert!(output.contains("hello"));
 }
 
 #[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_add_line() {
-    let mut grid = VisGrid::new(5, 5, None);
-    grid.add_line(vec![(0, 0), (1, 1), (2, 2)], BLUE);
-
-    let output = grid.to_vis_string("test");
+    let output = VisGrid::new(5, 5, None)
+        .add_line(vec![(0, 0), (1, 1), (2, 2)], BLUE)
+        .to_vis_string("test");
     assert!(output.contains("LINES"));
     assert!(output.contains("1")); // 1 line
     assert!(output.contains("#0000FF")); // BLUE color
@@ -82,18 +79,15 @@ fn test_color_from_string() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_multiple_operations() {
-    let mut grid = VisGrid::new(4, 4, None);
-
-    // Update multiple cell colors
-    grid.update_cell_color((0, 0), RED);
-    grid.update_cell_color((3, 3), BLUE);
-    grid.update_cell_color((1, 1), GREEN);
-
-    // Add multiple lines
-    grid.add_line(vec![(0, 0), (1, 0), (2, 0)], YELLOW);
-    grid.add_line(vec![(0, 3), (1, 3), (2, 3), (3, 3)], CYAN);
-
-    let output = grid.to_vis_string("multi");
+    let output = VisGrid::new(4, 4, None)
+        // Update multiple cell colors
+        .update_cell_color((0, 0), RED)
+        .update_cell_color((3, 3), BLUE)
+        .update_cell_color((1, 1), GREEN)
+        // Add multiple lines
+        .add_line(vec![(0, 0), (1, 0), (2, 0)], YELLOW)
+        .add_line(vec![(0, 3), (1, 3), (2, 3), (3, 3)], CYAN)
+        .to_vis_string("multi");
 
     // Check that all colors are present
     assert!(output.contains("#FF0000")); // RED
@@ -111,10 +105,10 @@ fn test_visgrid_multiple_operations() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_visgrid_walls() {
-    let mut grid = VisGrid::new(2, 2, None);
-    grid.remove_wall_vertical((1, 0));
-    grid.remove_wall_horizontal((0, 1));
-    let output = grid.to_vis_string("walls");
+    let output = VisGrid::new(2, 2, None)
+        .remove_wall_vertical((1, 0))
+        .remove_wall_horizontal((0, 1))
+        .to_vis_string("walls");
     assert!(output.contains("WALL_VERTICAL"));
     assert!(output.contains("WALL_HORIZONTAL"));
 }
@@ -139,9 +133,9 @@ fn test_vis2dplane_with_bounds() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_vis2dplane_add_circle() {
-    let mut plane = Vis2DPlane::new(100.0, 100.0, None);
-    plane.add_circle(RED, BLUE, 50.0, 50.0, 10.0);
-    let output = plane.to_vis_string("test");
+    let output = Vis2DPlane::new(100.0, 100.0, None)
+        .add_circle(RED, BLUE, 50.0, 50.0, 10.0)
+        .to_vis_string("test");
     assert!(output.contains("CIRCLES"));
     assert!(output.contains("#FF0000")); // RED stroke
     assert!(output.contains("#0000FF")); // BLUE fill
@@ -151,9 +145,9 @@ fn test_vis2dplane_add_circle() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_vis2dplane_add_line() {
-    let mut plane = Vis2DPlane::new(100.0, 100.0, None);
-    plane.add_line(GREEN, 2.0, 0.0, 0.0, 100.0, 100.0);
-    let output = plane.to_vis_string("test");
+    let output = Vis2DPlane::new(100.0, 100.0, None)
+        .add_line(GREEN, 2.0, 0.0, 0.0, 100.0, 100.0)
+        .to_vis_string("test");
     assert!(output.contains("LINES"));
     assert!(output.contains("#00FF00")); // GREEN
     assert!(output.contains("2 2 0 0 100 100"));
@@ -162,13 +156,13 @@ fn test_vis2dplane_add_line() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_vis2dplane_add_polygon() {
-    let mut plane = Vis2DPlane::new(100.0, 100.0, None);
-    plane.add_polygon(
-        RED,
-        YELLOW,
-        vec![(10.0, 10.0), (90.0, 10.0), (90.0, 90.0), (10.0, 90.0)],
-    );
-    let output = plane.to_vis_string("test");
+    let output = Vis2DPlane::new(100.0, 100.0, None)
+        .add_polygon(
+            RED,
+            YELLOW,
+            vec![(10.0, 10.0), (90.0, 10.0), (90.0, 90.0), (10.0, 90.0)],
+        )
+        .to_vis_string("test");
     assert!(output.contains("POLYGONS"));
     assert!(output.contains("#FF0000")); // RED stroke
     assert!(output.contains("#FFFF00")); // YELLOW fill
@@ -178,11 +172,10 @@ fn test_vis2dplane_add_polygon() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_visframe_new() {
-    let mut frame = VisFrame::new();
-    frame.set_score("12345".to_string());
-    frame.add_textarea("Debug info".to_string());
-
-    let output = frame.to_vis_string("test");
+    let output = VisFrame::new()
+        .set_score("12345".to_string())
+        .add_textarea("Debug info".to_string())
+        .to_vis_string("test");
     assert!(output.contains("$v(test) SCORE 12345"));
     assert!(output.contains("$v(test) TEXTAREA Debug info"));
     assert!(output.contains("$v(test) COMMIT"));
@@ -192,12 +185,11 @@ fn test_visframe_new() {
 #[test]
 fn test_visframe_with_grid() {
     let grid = VisGrid::new(3, 3, None);
-    let mut frame = VisFrame::new();
-    frame.add_grid(grid);
-    frame.set_score("12345".to_string());
-    frame.add_textarea("Debug info".to_string());
-
-    let output = frame.to_vis_string("test");
+    let output = VisFrame::new()
+        .add_grid(grid)
+        .set_score("12345".to_string())
+        .add_textarea("Debug info".to_string())
+        .to_vis_string("test");
     assert!(output.contains("$v(test) GRID 3 3"));
     assert!(output.contains("$v(test) SCORE 12345"));
     assert!(output.contains("$v(test) TEXTAREA Debug info"));
@@ -207,14 +199,10 @@ fn test_visframe_with_grid() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_visframe_with_2dplane() {
-    let mut plane = Vis2DPlane::new(100.0, 100.0, None);
-    plane.add_circle(RED, BLUE, 50.0, 50.0, 10.0);
-
-    let mut frame = VisFrame::new();
-    frame.add_2d_plane(plane);
-    frame.enable_debug();
-
-    let output = frame.to_vis_string("test");
+    let output = VisFrame::new()
+        .add_2d_plane(Vis2DPlane::new(100.0, 100.0, None).add_circle(RED, BLUE, 50.0, 50.0, 10.0))
+        .enable_debug()
+        .to_vis_string("test");
     assert!(output.contains("$v(test) 2D_PLANE 100 100"));
     assert!(output.contains("$v(test) DEBUG"));
     assert!(output.contains("$v(test) COMMIT"));
@@ -223,17 +211,15 @@ fn test_visframe_with_2dplane() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_visframe_with_canvas() {
-    let mut frame = VisFrame::new();
-    frame.set_canvas(VisCanvas::new(800.0, 1000.0));
-
     let grid1 = VisGrid::new(10, 10, Some(ItemBounds::new(0.0, 0.0, 400.0, 400.0)));
     let grid2 = VisGrid::new(5, 5, Some(ItemBounds::new(500.0, 0.0, 900.0, 400.0)));
 
-    frame.add_grid(grid1);
-    frame.add_grid(grid2);
-    frame.set_score("999".to_string());
-
-    let output = frame.to_vis_string("test");
+    let output = VisFrame::new()
+        .set_canvas(VisCanvas::new(800.0, 1000.0))
+        .add_grid(grid1)
+        .add_grid(grid2)
+        .set_score("999".to_string())
+        .to_vis_string("test");
     assert!(output.contains("$v(test) CANVAS 800 1000"));
     assert!(output.contains("$v(test) GRID(0, 0, 400, 400) 10 10"));
     assert!(output.contains("$v(test) GRID(500, 0, 900, 400) 5 5"));
@@ -247,23 +233,20 @@ fn test_visroot_add_frame() {
     let mut root = VisRoot::new();
 
     // Create first frame
-    {
-        let grid = VisGrid::new(2, 2, None);
-        let mut frame = VisFrame::new();
-        frame.add_grid(grid);
-        frame.set_score("100".to_string());
-        root.add_frame("main", frame);
-    }
+    root.add_frame(
+        "main",
+        VisFrame::new()
+            .add_grid(VisGrid::new(2, 2, None))
+            .set_score("100".to_string()),
+    );
 
     // Create second frame
-    {
-        let mut grid = VisGrid::new(2, 2, None);
-        grid.update_cell_color((0, 0), RED);
-        let mut frame = VisFrame::new();
-        frame.add_grid(grid);
-        frame.set_score("200".to_string());
-        root.add_frame("main", frame);
-    }
+    root.add_frame(
+        "main",
+        VisFrame::new()
+            .add_grid(VisGrid::new(2, 2, None).update_cell_color((0, 0), RED))
+            .set_score("200".to_string()),
+    );
 
     let frames = root.get_frames("main").unwrap();
     assert_eq!(frames.len(), 2);
@@ -279,22 +262,20 @@ fn test_visroot_multiple_modes() {
     let mut root = VisRoot::new();
 
     // Main mode
-    {
-        let grid = VisGrid::new(1, 1, None);
-        let mut frame = VisFrame::new();
-        frame.add_grid(grid);
-        frame.set_score("100".to_string());
-        root.add_frame("main", frame);
-    }
+    root.add_frame(
+        "main",
+        VisFrame::new()
+            .add_grid(VisGrid::new(1, 1, None))
+            .set_score("100".to_string()),
+    );
 
     // Debug mode
-    {
-        let grid = VisGrid::new(1, 1, None);
-        let mut frame = VisFrame::new();
-        frame.add_grid(grid);
-        frame.add_textarea("Debug message".to_string());
-        root.add_frame("debug", frame);
-    }
+    root.add_frame(
+        "debug",
+        VisFrame::new()
+            .add_grid(VisGrid::new(1, 1, None))
+            .add_textarea("Debug message".to_string()),
+    );
 
     assert_eq!(root.get_frames("main").unwrap().len(), 1);
     assert_eq!(root.get_frames("debug").unwrap().len(), 1);
@@ -305,14 +286,14 @@ fn test_visroot_multiple_modes() {
 fn test_visroot_add_frames() {
     let mut root = VisRoot::new();
 
-    let mut frames_to_add = Vec::new();
-    for score in [100, 200, 300] {
-        let grid = VisGrid::new(1, 1, None);
-        let mut frame = VisFrame::new();
-        frame.add_grid(grid);
-        frame.set_score(score.to_string());
-        frames_to_add.push(frame);
-    }
+    let frames_to_add: Vec<_> = [100, 200, 300]
+        .iter()
+        .map(|&score| {
+            VisFrame::new()
+                .add_grid(VisGrid::new(1, 1, None))
+                .set_score(score.to_string())
+        })
+        .collect();
 
     root.add_frames("main", frames_to_add);
 
@@ -339,12 +320,12 @@ fn test_visroot_file_output() {
     let mut root = VisRoot::new_with_file(&test_file);
 
     // Add some frames
-    let mut grid = VisGrid::new(2, 2, None);
-    grid.update_cell_color((0, 0), RED);
-    let mut frame = VisFrame::new();
-    frame.add_grid(grid);
-    frame.set_score("12345".to_string());
-    root.add_frame("test", frame);
+    root.add_frame(
+        "test",
+        VisFrame::new()
+            .add_grid(VisGrid::new(2, 2, None).update_cell_color((0, 0), RED))
+            .set_score("12345".to_string()),
+    );
 
     // Output to file
     root.output_all();
@@ -374,22 +355,19 @@ fn test_visroot_file_output_multiple_modes() {
     let mut root = VisRoot::new_with_file(&test_file);
 
     // Add frames to different modes
-    {
-        let grid = VisGrid::new(1, 1, None);
-        let mut frame = VisFrame::new();
-        frame.add_grid(grid);
-        frame.set_score("100".to_string());
-        root.add_frame("main", frame);
-    }
+    root.add_frame(
+        "main",
+        VisFrame::new()
+            .add_grid(VisGrid::new(1, 1, None))
+            .set_score("100".to_string()),
+    );
 
-    {
-        let mut plane = Vis2DPlane::new(50.0, 50.0, None);
-        plane.add_circle(RED, BLUE, 25.0, 25.0, 5.0);
-        let mut frame = VisFrame::new();
-        frame.add_2d_plane(plane);
-        frame.set_score("200".to_string());
-        root.add_frame("debug", frame);
-    }
+    root.add_frame(
+        "debug",
+        VisFrame::new()
+            .add_2d_plane(Vis2DPlane::new(50.0, 50.0, None).add_circle(RED, BLUE, 25.0, 25.0, 5.0))
+            .set_score("200".to_string()),
+    );
 
     root.output_all();
 
@@ -444,16 +422,15 @@ mod vis_disabled_tests {
     #[test]
     fn test_visgrid_operations_compile() {
         // Verify that all operations compile and run without errors
-        let mut grid = VisGrid::new(10, 10, None);
-        grid.update_cell_color((5, 5), RED);
-        grid.update_text((5, 5), "test".to_string());
-        grid.add_line(vec![(0, 0), (1, 1), (2, 2)], BLUE);
-        grid.remove_wall_vertical((1, 0));
-        grid.remove_wall_horizontal((0, 1));
-        grid.add_wall_vertical((2, 0));
-        grid.add_wall_horizontal((0, 2));
-
-        let output = grid.to_vis_string("test");
+        let output = VisGrid::new(10, 10, None)
+            .update_cell_color((5, 5), RED)
+            .update_text((5, 5), "test".to_string())
+            .add_line(vec![(0, 0), (1, 1), (2, 2)], BLUE)
+            .remove_wall_vertical((1, 0))
+            .remove_wall_horizontal((0, 1))
+            .add_wall_vertical((2, 0))
+            .add_wall_horizontal((0, 2))
+            .to_vis_string("test");
         assert!(output.is_empty()); // Output should be empty when vis is disabled
     }
 
@@ -467,16 +444,15 @@ mod vis_disabled_tests {
 
     #[test]
     fn test_vis2dplane_operations_compile() {
-        let mut plane = Vis2DPlane::new(100.0, 100.0, None);
-        plane.add_circle(RED, BLUE, 50.0, 50.0, 10.0);
-        plane.add_line(GREEN, 2.0, 0.0, 0.0, 100.0, 100.0);
-        plane.add_polygon(
-            RED,
-            YELLOW,
-            vec![(10.0, 10.0), (90.0, 10.0), (90.0, 90.0), (10.0, 90.0)],
-        );
-
-        let output = plane.to_vis_string("test");
+        let output = Vis2DPlane::new(100.0, 100.0, None)
+            .add_circle(RED, BLUE, 50.0, 50.0, 10.0)
+            .add_line(GREEN, 2.0, 0.0, 0.0, 100.0, 100.0)
+            .add_polygon(
+                RED,
+                YELLOW,
+                vec![(10.0, 10.0), (90.0, 10.0), (90.0, 90.0), (10.0, 90.0)],
+            )
+            .to_vis_string("test");
         assert!(output.is_empty());
     }
 
@@ -491,37 +467,33 @@ mod vis_disabled_tests {
     #[test]
     fn test_visframe_operations_compile() {
         let grid = VisGrid::new(3, 3, None);
-        let mut frame = VisFrame::new();
-        frame.add_grid(grid);
-        frame.add_textarea("Debug info".to_string());
-        frame.enable_debug();
-        frame.disable_debug();
-        frame.set_score("999".to_string());
-
-        let output = frame.to_vis_string("test");
+        let output = VisFrame::new()
+            .add_grid(grid)
+            .add_textarea("Debug info".to_string())
+            .enable_debug()
+            .disable_debug()
+            .set_score("999".to_string())
+            .to_vis_string("test");
         assert!(output.is_empty());
     }
 
     #[test]
     fn test_visframe_with_2dplane_compiles() {
         let plane = Vis2DPlane::new(100.0, 100.0, None);
-        let mut frame = VisFrame::new();
-        frame.add_2d_plane(plane);
-        frame.enable_debug();
-
-        let output = frame.to_vis_string("test");
+        let output = VisFrame::new()
+            .add_2d_plane(plane)
+            .enable_debug()
+            .to_vis_string("test");
         assert!(output.is_empty());
     }
 
     #[test]
     fn test_visframe_with_canvas_compiles() {
-        let mut frame = VisFrame::new();
-        frame.set_canvas(VisCanvas::new(800.0, 1000.0));
-
         let grid = VisGrid::new(10, 10, Some(ItemBounds::new(0.0, 0.0, 400.0, 400.0)));
-        frame.add_grid(grid);
-
-        let output = frame.to_vis_string("test");
+        let output = VisFrame::new()
+            .set_canvas(VisCanvas::new(800.0, 1000.0))
+            .add_grid(grid)
+            .to_vis_string("test");
         assert!(output.is_empty());
     }
 
@@ -530,18 +502,16 @@ mod vis_disabled_tests {
         let mut root = VisRoot::new();
 
         let grid = VisGrid::new(2, 2, None);
-        let mut frame = VisFrame::new();
-        frame.add_grid(grid);
-        frame.set_score("100".to_string());
+        let frame = VisFrame::new().add_grid(grid).set_score("100".to_string());
         root.add_frame("main", frame);
 
-        let mut frame2 = VisFrame::new();
-        frame2.add_grid(VisGrid::new(1, 1, None));
-        frame2.set_score("200".to_string());
+        let frame2 = VisFrame::new()
+            .add_grid(VisGrid::new(1, 1, None))
+            .set_score("200".to_string());
 
-        let mut frame3 = VisFrame::new();
-        frame3.add_grid(VisGrid::new(1, 1, None));
-        frame3.set_score("300".to_string());
+        let frame3 = VisFrame::new()
+            .add_grid(VisGrid::new(1, 1, None))
+            .set_score("300".to_string());
 
         root.add_frames("main", vec![frame2, frame3]);
 
@@ -576,11 +546,10 @@ mod vis_disabled_tests {
 #[cfg(feature = "vis")]
 #[test]
 fn test_bar_graph_basic() {
-    let mut bar_graph = VisBarGraph::new(BLUE, 0.0, 100.0);
-    bar_graph.add_item("A".to_string(), 50.0);
-    bar_graph.add_item("B".to_string(), 75.0);
-
-    let output = bar_graph.to_vis_string("test");
+    let output = VisBarGraph::new(BLUE, 0.0, 100.0)
+        .add_item("A".to_string(), 50.0)
+        .add_item("B".to_string(), 75.0)
+        .to_vis_string("test");
     assert!(output.contains("$v(test) BAR_GRAPH #0000FF 0 100"));
     assert!(output.contains("2 A 50 B 75"));
 }
@@ -588,15 +557,14 @@ fn test_bar_graph_basic() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_bar_graph_add_items() {
-    let mut bar_graph = VisBarGraph::new(RED, -10.0, 10.0);
     let items = vec![
         BarGraphItem::new("X".to_string(), -5.0),
         BarGraphItem::new("Y".to_string(), 0.0),
         BarGraphItem::new("Z".to_string(), 7.5),
     ];
-    bar_graph.add_items(items);
-
-    let output = bar_graph.to_vis_string("test");
+    let output = VisBarGraph::new(RED, -10.0, 10.0)
+        .add_items(items)
+        .to_vis_string("test");
     assert!(output.contains("$v(test) BAR_GRAPH #FF0000 -10 10"));
     assert!(output.contains("3 X -5 Y 0 Z 7.5"));
 }
@@ -604,14 +572,14 @@ fn test_bar_graph_add_items() {
 #[cfg(feature = "vis")]
 #[test]
 fn test_frame_add_bar_graph() {
-    let mut frame = VisFrame::new();
-    let mut bar_graph = VisBarGraph::new(GREEN, 0.0, 200.0);
-    bar_graph.add_item("Item1".to_string(), 100.0);
-    bar_graph.add_item("Item2".to_string(), 150.0);
-    frame.add_bar_graph(bar_graph);
-    frame.set_score("12345".to_string());
-
-    let output = frame.to_vis_string("main");
+    let output = VisFrame::new()
+        .add_bar_graph(
+            VisBarGraph::new(GREEN, 0.0, 200.0)
+                .add_item("Item1".to_string(), 100.0)
+                .add_item("Item2".to_string(), 150.0),
+        )
+        .set_score("12345".to_string())
+        .to_vis_string("main");
     assert!(output.contains("$v(main) BAR_GRAPH #00FF00 0 200"));
     assert!(output.contains("2 Item1 100 Item2 150"));
     assert!(output.contains("$v(main) SCORE 12345"));
@@ -632,17 +600,19 @@ mod bar_graph_disabled_tests {
 
     #[test]
     fn test_bar_graph_operations_compile() {
-        let mut bar_graph = VisBarGraph::new(RED, 0.0, 100.0);
-        bar_graph.add_item("A".to_string(), 50.0);
-        bar_graph.add_items(vec![BarGraphItem::new("B".to_string(), 75.0)]);
-        let _ = bar_graph.to_vis_string("test");
+        let output = VisBarGraph::new(RED, 0.0, 100.0)
+            .add_item("A".to_string(), 50.0)
+            .add_items(vec![BarGraphItem::new("B".to_string(), 75.0)])
+            .to_vis_string("test");
+        assert!(output.is_empty());
     }
 
     #[test]
     fn test_frame_add_bar_graph_compiles() {
-        let mut frame = VisFrame::new();
         let bar_graph = VisBarGraph::new(GREEN, 0.0, 100.0);
-        frame.add_bar_graph(bar_graph);
-        let _ = frame.to_vis_string("test");
+        let output = VisFrame::new()
+            .add_bar_graph(bar_graph)
+            .to_vis_string("test");
+        assert!(output.is_empty());
     }
 }

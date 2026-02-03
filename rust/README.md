@@ -49,13 +49,11 @@ use ahc_vdsl::ahc_vdsl::*;
 fn main() {
     let mut vis = VisRoot::new();
 
-    // 10x10のグリッドを作成
+    // 10x10のグリッドを作成し、フレームに追加
     let grid = VisGrid::new(10, 10, None);
-
-    // フレームを作成してグリッドとスコアを設定
-    let mut frame = VisFrame::new();
-    frame.add_grid(grid);
-    frame.set_score("12345".to_string());
+    let frame = VisFrame::new()
+        .add_grid(grid)
+        .set_score("12345".to_string());
 
     // フレームを追加
     vis.add_frame("default", frame);
@@ -68,14 +66,12 @@ fn main() {
 #### 2. セルの色とテキストを設定
 
 ```rust
-let mut grid = VisGrid::new(10, 10, None);
-
-// セルの色を変更 (x, y) = (3, 5) を赤に
-grid.update_cell_color((3, 5), RED);
-
-// セルにテキストを表示
-grid.update_text((0, 0), "A".to_string());
-grid.update_text((1, 0), "B".to_string());
+let grid = VisGrid::new(10, 10, None)
+    // セルの色を変更 (x, y) = (3, 5) を赤に
+    .update_cell_color((3, 5), RED)
+    // セルにテキストを表示
+    .update_text((0, 0), "A".to_string())
+    .update_text((1, 0), "B".to_string());
 ```
 
 #### 3. 複数フレームのアニメーション
@@ -84,16 +80,15 @@ grid.update_text((1, 0), "B".to_string());
 let mut vis = VisRoot::new();
 
 for step in 0..100 {
-    let mut grid = VisGrid::new(10, 10, None);
-
     // 現在位置をハイライト
     let pos = (step % 10, step / 10);
-    grid.update_cell_color(pos, BLUE);
+    let grid = VisGrid::new(10, 10, None)
+        .update_cell_color(pos, BLUE);
 
-    let mut frame = VisFrame::new();
-    frame.add_grid(grid);
-    frame.set_score((step * 100).to_string());
-    frame.add_textarea(format!("Step: {}", step));
+    let frame = VisFrame::new()
+        .add_grid(grid)
+        .set_score((step * 100).to_string())
+        .add_textarea(format!("Step: {}", step));
 
     vis.add_frame("main", frame);
 }
@@ -108,16 +103,16 @@ let mut vis = VisRoot::new();
 
 // メインモード用のフレーム
 let main_grid = VisGrid::new(20, 20, None);
-let mut main_frame = VisFrame::new();
-main_frame.add_grid(main_grid);
-main_frame.set_score("1000".to_string());
+let main_frame = VisFrame::new()
+    .add_grid(main_grid)
+    .set_score("1000".to_string());
 vis.add_frame("main", main_frame);
 
 // デバッグモード用のフレーム
 let debug_grid = VisGrid::new(5, 5, None);
-let mut debug_frame = VisFrame::new();
-debug_frame.add_grid(debug_grid);
-debug_frame.enable_debug();  // 生のコマンドを表示
+let debug_frame = VisFrame::new()
+    .add_grid(debug_grid)
+    .enable_debug();  // 生のコマンドを表示
 vis.add_frame("debug", debug_frame);
 
 vis.output_all();
@@ -126,45 +121,40 @@ vis.output_all();
 #### 5. 2D平面描画
 
 ```rust
-let mut plane = Vis2DPlane::new(100.0, 100.0, None);
+let plane = Vis2DPlane::new(100.0, 100.0, None)
+    // 円を追加
+    .add_circle(BLACK, RED, 50.0, 50.0, 10.0)
+    // 線を追加
+    .add_line(BLUE, 2.0, 0.0, 0.0, 100.0, 100.0)
+    // 多角形を追加
+    .add_polygon(GREEN, YELLOW, vec![
+        (10.0, 10.0),
+        (90.0, 10.0),
+        (90.0, 90.0),
+        (10.0, 90.0),
+    ]);
 
-// 円を追加
-plane.add_circle(BLACK, RED, 50.0, 50.0, 10.0);
-
-// 線を追加
-plane.add_line(BLUE, 0.0, 0.0, 100.0, 100.0);
-
-// 多角形を追加
-plane.add_polygon(GREEN, YELLOW, vec![
-    (10.0, 10.0),
-    (90.0, 10.0),
-    (90.0, 90.0),
-    (10.0, 90.0),
-]);
-
-let mut frame = VisFrame::new();
-frame.add_2d_plane(plane);
-frame.set_score("5000".to_string());
+let frame = VisFrame::new()
+    .add_2d_plane(plane)
+    .set_score("5000".to_string());
 ```
 
 #### 6. キャンバスに複数のアイテムを配置
 
 ```rust
-let mut frame = VisFrame::new();
-
-// キャンバスサイズを設定 (高さ800, 幅1000)
-frame.set_canvas(VisCanvas::new(800.0, 1000.0));
-
 // 左側にグリッドを配置
-let mut grid1 = VisGrid::new(20, 20, Some(ItemBounds::new(0.0, 0.0, 800.0, 800.0)));
-grid1.update_cell_color((5, 5), RED);
-frame.add_grid(grid1);
+let grid1 = VisGrid::new(20, 20, Some(ItemBounds::new(0.0, 0.0, 800.0, 800.0)))
+    .update_cell_color((5, 5), RED);
 
 // 右側に別のグリッドを配置
 let grid2 = VisGrid::new(10, 1, Some(ItemBounds::new(850.0, 0.0, 950.0, 800.0)));
-frame.add_grid(grid2);
 
-frame.set_score("12345".to_string());
+let frame = VisFrame::new()
+    // キャンバスサイズを設定 (高さ800, 幅1000)
+    .set_canvas(VisCanvas::new(800.0, 1000.0))
+    .add_grid(grid1)
+    .add_grid(grid2)
+    .set_score("12345".to_string());
 ```
 
 #### 7. ファイルへの出力
