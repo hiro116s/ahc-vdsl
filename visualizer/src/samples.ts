@@ -130,7 +130,7 @@ function renderSamplesPage(): void {
                         <span class="link-label">Source code:</span> <a href="#" target="_blank" class="code-link-url"></a>
                     </div>
                     <div id="dslDocLink" class="link-item" style="display: none;">
-                        <span class="link-label">DSL documentation:</span> <a href="#" target="_blank" class="code-link-url"></a>
+                        <span class="link-label">DSL code:</span> <a href="#" target="_blank" class="code-link-url"></a>
                     </div>
                 </div>
 

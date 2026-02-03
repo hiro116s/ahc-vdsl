@@ -12,6 +12,9 @@
 2. `Cargo.toml` に以下を追加します:
 
 ```toml
+[dependencies]
+rustc-hash = "=1.1.0"
+
 [features]
 vis = []
 ```
@@ -49,7 +52,7 @@ fn main() {
     let grid = VisGrid::new(10, 10);
     
     // フレームを作成してスコアを設定
-    let frame = VisFrame::new_grid(grid, 12345);
+    let frame = VisFrame::new();
     
     // フレームを追加
     vis.add_frame("default", frame);

@@ -32,6 +32,7 @@
         "title": "Animation",
         "description": "複数フレームによるアニメーションのサンプル",
         "dataFile": "animation.txt",
+        "codeUrl": "/samples/animation.rs",
         "category": "simple"
     },
     {
