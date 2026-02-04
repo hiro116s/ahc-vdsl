@@ -10,17 +10,18 @@ visualizerを作る際に、HTML/JavaScriptでwebページを実装すること�
 AHC-VDSLは実行時の出力から特定のプレフィックス（`$v`）を持つ行をパースし、アニメーションや盤面情報を描画します。
 これによって、解答のコード内でAHC-VDSLのコードを生成することによって簡単にvisualizerを自作することができます。
 
-どのようなvisualizerを作成できるかは[サンプル一覧]()を参照してください
+詳細は以下のリンクを参照してください
+- [サンプル一覧](https://hiro116s.github.io/ahc-vdsl/samples) - 作成できるvisualizerの一例を紹介しています
+- [SPECIFICATIONS.md](SPECIFICATIONS.md) - DSLの詳しい仕様が書いてあります
+- [rust/README.md](rust/README.md) - RustのAHC VDSLのwrapperの使い方
+- [cpp/README.md](cpp/README.md) - C++のAHC VDSLのwrapperの使い方
 
 ## 使い方
 AHC-VDSLを記述するために、ライブラリを使用することをおすすめします。現時点ではC++とRustがあります。ここに存在しない言語もLLMに頼めば実装してくれるかもしれません。
 
-1. `rust/README.md`または`cpp/README.md`に沿って実装する
-2. `atcoder`
-3. `vis/index.html` をブラウザで開きます。 
-   - ※ローカルサーバ経由で開くか、ブラウザのセキュリティ設定によってはローカルファイルの読み込みに制限がある場合があります。VS Codeの "Live Server" 拡張機能などを使うとスムーズです。
-4. 画面上の "Seed" 入力欄にシード番号（例: 0）を入力すると、自動的に対応するファイルの読み込みと描画が行われます。
-
+1. `{rust,cpp}/README.md`に沿って実装し、DSLを生成する
+1. https://hiro116s.github.io/ahc-vdsl を開く
+   - または[ahc-vdsl](https://github.com/hiro116s/ahc-vdsl)をcloneし、ローカルでvisualizerを立ち上げる
+1. DSLを含むファイルを選択すると、
 ## プロトコル仕様
 
-プロトコル仕様の詳細は [SPECIFICATIONS.md](SPECIFICATIONS.md) を参照してください。

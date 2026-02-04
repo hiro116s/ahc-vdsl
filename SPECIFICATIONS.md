@@ -12,6 +12,25 @@ $v(main) GRID ...
 $v(sub) TEXTAREA ...
 ```
 
+## 目次
+
+- [0. キャンバス設定: `$v(MODE) CANVAS`](#0-キャンバス設定-vmode-canvas)
+- [1. フレーム区切り: `$v(MODE) COMMIT`](#1-フレーム区切り-vmode-commit)
+- [2. グリッド描画: `$v(MODE) GRID`](#2-グリッド描画-vmode-grid)
+  - [A. セル背景色 (全指定): `CELL_COLORS`](#a-セル背景色-全指定-cell_colors)
+  - [B. セル背景色 (部分指定): `CELL_COLORS_POS`](#b-セル背景色-部分指定-cell_colors_pos)
+  - [C. セル内テキスト: `CELL_TEXT`](#c-セル内テキスト-cell_text)
+  - [D. 線描画: `LINES`](#d-線描画-lines)
+  - [E. 壁の削除: `WALL_HORIZONTAL` / `WALL_VERTICAL`](#e-壁の削除-wall_horizontal--wall_vertical)
+- [3. 2次元平面描画: `$v(MODE) 2D_PLANE`](#3-2次元平面描画-vmode-2d_plane)
+  - [A. 円描画: `CIRCLES`](#a-円描画-circles)
+  - [B. 線描画: `LINES`](#b-線描画-lines-1)
+  - [C. 多角形描画: `POLYGONS`](#c-多角形描画-polygons)
+- [4. 情報パネル (テキストエリア): `$v(MODE) TEXTAREA`](#4-情報パネル-テキストエリア-vmode-textarea)
+- [5. バーグラフ: `$v(MODE) BAR_GRAPH`](#5-バーグラフ-vmode-bar_graph)
+- [6. スコア更新: `$v(MODE) SCORE`](#6-スコア更新-vmode-score)
+- [7. デバッグ表示: `$v(MODE) DEBUG`](#7-デバッグ表示-vmode-debug)
+
 ### 0. キャンバス設定: `$v(MODE) CANVAS`
 
 キャンバスのサイズを指定します。このコマンドを使用しない場合、デフォルトで800x800のキャンバスが使用されます。
@@ -259,61 +278,4 @@ $v(MODE) SCORE 12345
 
 ```text
 $v(MODE) DEBUG
-```
-
----
-
-## 2D_PLANE コマンドの使用例
-
-```text
-# 100x100の2次元平面を設定
-$v(main) 2D_PLANE 100 100
-
-# 円を描画
-CIRCLES
-2
-red blue 2 50 50 10 70 30 5
-green yellow 1 25 75 8
-
-# 線を描画
-LINES
-1
-black 2 2 0 0 100 100
-
-# 多角形を描画
-POLYGONS
-1
-purple pink 4 10 10 90 10 90 90 10 90
-
-# フレームを確定
-$v(main) COMMIT
-```
-
----
-
-## 使用例
-
-```text
-# メインモードでグリッド初期化
-$v(main) GRID 30 30 #ddd black white
-CELL_COLORS_POS
-0
-CELL_TEXT
-
-LINES
-0
-
-# サブモードで別の情報を表示
-$v(debug) TEXTAREA DebugInfo 250 #1565c0 #e3f2fd Start Processing...
-
-# バーグラフでスコアの内訳を表示
-$v(main) BAR_GRAPH #4169E1 0 100
-3 Speed 85.5 Accuracy 92.0 Coverage 78.3
-
-# デバッグ表示を有効にする
-$v(main) DEBUG
-
-# メインモードのフレーム更新
-$v(main) SCORE 12345
-$v(main) COMMIT
 ```
