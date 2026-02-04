@@ -19,9 +19,10 @@ AHC-VDSLは実行時の出力から特定のプレフィックス（`$v`）を�
 ## 使い方
 AHC-VDSLを記述するために、ライブラリを使用することをおすすめします。現時点ではC++とRustがあります。ここに存在しない言語もLLMに頼めば実装してくれるかもしれません。
 
-1. `{rust,cpp}/README.md`に沿って実装し、DSLを生成する
-1. https://hiro116s.github.io/ahc-vdsl を開く
-   - または[ahc-vdsl](https://github.com/hiro116s/ahc-vdsl)をcloneし、ローカルでvisualizerを立ち上げる
-1. DSLを含むファイルを選択すると、
-## プロトコル仕様
+1. 各言語に沿って実装し、DSLを生成する
+2. https://hiro116s.github.io/ahc-vdsl を開く
+   - またはGitHubから[ahc-vdsl](https://github.com/hiro116s/ahc-vdsl)をcloneし、ローカルでvisualizerを立ち上げる
+3. DSLを含むファイルを選択すると、visualizeされた結果が表示されます
 
+以下はRustでライブラリを用いてDSLを生成し、visualizeする例です
+![Demo](./images/how_to_use.gif)
