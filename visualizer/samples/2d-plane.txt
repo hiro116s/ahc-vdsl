@@ -15,6 +15,6 @@ POLYGONS
 1
 #000000 #AAFFAA 4 150 200 200 150 250 200 200 250
 $v(default) SCORE 4200
-$v(default) TEXTAREA 2D Plane with circles, lines, and a polygon
+$v(default) TEXTAREA Info 50 #000000 #FFFFFF 2D Plane with circles, lines, and a polygon
 $v(default) DEBUG
 $v(default) COMMIT

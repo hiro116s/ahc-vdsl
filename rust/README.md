@@ -85,10 +85,18 @@ for step in 0..100 {
     let grid = VisGrid::new(10, 10, None)
         .update_cell_color(pos, BLUE);
 
+    let textarea = VisTextArea::new(
+        "StepInfo".to_string(),
+        format!("Step: {}", step)
+    )
+    .height(150)
+    .text_color("#1565c0".to_string())
+    .fill_color("#e3f2fd".to_string());
+
     let frame = VisFrame::new()
         .add_grid(grid)
         .set_score((step * 100).to_string())
-        .add_textarea(format!("Step: {}", step));
+        .add_textarea(textarea);
 
     vis.add_frame("main", frame);
 }
@@ -199,5 +207,21 @@ let custom_color = Color::new(128, 64, 255);
 | `VisCanvas`  | キャンバスのサイズ設定                     |
 | `VisGrid`    | グリッド（盤面）の描画                     |
 | `Vis2DPlane` | 2次元平面上の図形描画                      |
+| `VisTextArea`| テキストエリアの表示（タイトル、高さ、色のカスタマイズ可能） |
 | `ItemBounds` | キャンバス内でのアイテムの位置指定         |
 | `Color`      | RGB色                                      |
+
+#### VisTextArea
+
+テキストエリアを作成し、カスタマイズします。Rustのラッパーでは高さと色はオプションですが、出力されるDSLフォーマットでは全てのパラメータが含まれます。
+
+```rust
+let textarea = VisTextArea::new(
+    "Title".to_string(),      // タイトル（必須）
+    "Content text".to_string() // 表示テキスト（必須）
+)
+.height(300)                                    // 高さ（オプション、デフォルト: 200）
+.text_color("#ff0000".to_string())             // 文字色（オプション、デフォルト: #000000）
+.fill_color("#ffff00".to_string());            // 背景色（オプション、デフォルト: #ffffff）
+
+// 出力されるDSL: $v(MODE) TEXTAREA Title 300 #ff0000 #ffff00 Content text

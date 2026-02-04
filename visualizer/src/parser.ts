@@ -107,9 +107,33 @@ export function parseStderr(stderrText: string): ParsedModes {
             lineIdx++;
         } else if (cmd === 'TEXTAREA') {
             const taIndex = remaining.indexOf('TEXTAREA');
-            const text = remaining.substring(taIndex + 8).trim();
-            pendingCommands[mode].push({ type: 'TEXTAREA', text });
-            lineIdx++;
+            const afterTextarea = remaining.substring(taIndex + 8).trim();
+            const parts = afterTextarea.split(/\s+/);
+            
+            if (parts.length < 5) {
+                pendingErrors[mode].push(`Line ${lineIdx + 1}: TEXTAREA requires 5 parameters: TITLE HEIGHT TEXT_COLOR FILL_COLOR TEXT`);
+                lineIdx++;
+            } else {
+                const title = parts[0];
+                const height = parseInt(parts[1]);
+                const textColor = parts[2];
+                const fillColor = parts[3];
+                const text = parts.slice(4).join(' ');
+                
+                if (isNaN(height)) {
+                    pendingErrors[mode].push(`Line ${lineIdx + 1}: TEXTAREA height must be a number, got '${parts[1]}'`);
+                    lineIdx++;
+                } else if (!textColor.startsWith('#')) {
+                    pendingErrors[mode].push(`Line ${lineIdx + 1}: TEXTAREA text color must start with #, got '${textColor}'`);
+                    lineIdx++;
+                } else if (!fillColor.startsWith('#')) {
+                    pendingErrors[mode].push(`Line ${lineIdx + 1}: TEXTAREA fill color must start with #, got '${fillColor}'`);
+                    lineIdx++;
+                } else {
+                    pendingCommands[mode].push({ type: 'TEXTAREA', title, height, textColor, fillColor, text });
+                    lineIdx++;
+                }
+            }
         } else if (cmd === 'SCORE') {
             const sIndex = remaining.indexOf('SCORE');
             const score = remaining.substring(sIndex + 5).trim();

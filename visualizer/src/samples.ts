@@ -549,11 +549,26 @@ function renderCurrentFrame(): void {
         } else if (cmd.type === 'CANVAS') {
             // Canvas command is handled above for sizing, no visual rendering needed
         } else if (cmd.type === 'TEXTAREA') {
+            const container = document.createElement('div');
+            container.style.marginBottom = '10px';
+            
+            const titleLabel = document.createElement('div');
+            titleLabel.textContent = cmd.title;
+            titleLabel.style.fontWeight = 'bold';
+            titleLabel.style.marginBottom = '4px';
+            titleLabel.style.fontSize = '14px';
+            container.appendChild(titleLabel);
+            
             const ta = document.createElement('textarea');
             ta.className = 'info-textarea';
             ta.readOnly = true;
             ta.value = cmd.text;
-            infoDiv.appendChild(ta);
+            ta.style.height = `${cmd.height}px`;
+            ta.style.color = cmd.textColor;
+            ta.style.backgroundColor = cmd.fillColor;
+            
+            container.appendChild(ta);
+            infoDiv.appendChild(container);
         } else if (cmd.type === 'SCORE') {
             scoreDisplay.textContent = `Score = ${cmd.score}`;
         }

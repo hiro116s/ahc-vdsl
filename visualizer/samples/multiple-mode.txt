@@ -9,7 +9,7 @@ CELL_COLORS_POS
 1
 #BBBBBB 5 0 0 1 1 2 2 3 3 4 4
 $v(mode1) SCORE 1000
-$v(mode1) TEXTAREA mode1 has GRID
+$v(mode1) TEXTAREA Info 50 #000000 #FFFFFF mode1 has GRID
 $v(mode1) DEBUG
 $v(mode1) COMMIT
 
@@ -26,7 +26,7 @@ POLYGONS
 1
 #000000 #AAFFAA 3 200 200 240 240 240 150
 $v(mode2) SCORE 4200
-$v(mode2) TEXTAREA mode2 has 2DPlane.  Animation can be implemented as well.
+$v(mode2) TEXTAREA Info 50 #000000 #FFFFFF mode2 has 2DPlane.  Animation can be implemented as well.
 $v(mode2) DEBUG
 $v(mode2) COMMIT
 
@@ -43,6 +43,6 @@ POLYGONS
 1
 #000000 #AAFFAA 3 230 230 270 270 270 180
 $v(mode2) SCORE 4500
-$v(mode2) TEXTAREA mode2 has 2DPlane.  Animation can be implemented as well.
+$v(mode2) TEXTAREA Info 50 #000000 #FFFFFF mode2 has 2DPlane.  Animation can be implemented as well.
 $v(mode2) DEBUG
 $v(mode2) COMMIT

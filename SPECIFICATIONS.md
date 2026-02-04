@@ -198,8 +198,22 @@ $v(main) COMMIT
 
 画面右側の情報パネルに複数行のテキストエリアを追加します（長い情報向け）。
 
+**構文:**
 ```text
-$v(MODE) TEXTAREA DebugInfo: ...
+$v(MODE) TEXTAREA [TITLE] [HEIGHT] [TEXT_COLOR] [FILL_COLOR] [TEXT]
+```
+
+**パラメータ:**
+- `TITLE`: テキストエリアの上部に表示されるタイトル（必須）
+- `HEIGHT`: テキストエリアの高さ（ピクセル単位、必須）
+- `TEXT_COLOR`: 文字色（#RRGGBBフォーマット、必須）
+- `FILL_COLOR`: 背景色（#RRGGBBフォーマット、必須）
+- `TEXT`: 表示するテキスト（必須）
+
+**例:**
+```text
+$v(main) TEXTAREA Info 200 #000000 #ffffff Basic information text
+$v(debug) TEXTAREA DebugInfo 300 #ff0000 #ffff00 Debug message with custom height and colors
 ```
 
 ### 5. バーグラフ: `$v(MODE) BAR_GRAPH`
@@ -290,7 +304,7 @@ LINES
 0
 
 # サブモードで別の情報を表示
-$v(debug) TEXTAREA Start Processing...
+$v(debug) TEXTAREA DebugInfo 250 #1565c0 #e3f2fd Start Processing...
 
 # バーグラフでスコアの内訳を表示
 $v(main) BAR_GRAPH #4169E1 0 100

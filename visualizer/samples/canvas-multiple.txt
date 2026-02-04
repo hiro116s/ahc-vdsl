@@ -28,6 +28,6 @@ POLYGONS
 #000000 #FFFFFF 4 0 0 0 400 400 400 400 0
 #000000 #8888FF 4 0 200 200 400 400 200 200 0
 $v(default) SCORE 5000
-$v(default) TEXTAREA Canvas with multiple items: Grid (left) and 2D Plane (right)
+$v(default) TEXTAREA Info 50 #000000 #FFFFFF Canvas with multiple items: Grid (left) and 2D Plane (right)
 $v(default) DEBUG
 $v(default) COMMIT

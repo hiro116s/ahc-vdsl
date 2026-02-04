@@ -232,10 +232,10 @@ fn test_vis2dplane_line_grouping() {
 fn test_visframe_new() {
     let output = VisFrame::new()
         .set_score("12345".to_string())
-        .add_textarea("Debug info".to_string())
+        .add_textarea(VisTextArea::new("Info".to_string(), "Debug info".to_string()))
         .to_vis_string("test");
     assert!(output.contains("$v(test) SCORE 12345"));
-    assert!(output.contains("$v(test) TEXTAREA Debug info"));
+    assert!(output.contains("$v(test) TEXTAREA Info 200 #000000 #ffffff Debug info"));
     assert!(output.contains("$v(test) COMMIT"));
 }
 
@@ -246,12 +246,35 @@ fn test_visframe_with_grid() {
     let output = VisFrame::new()
         .add_grid(grid)
         .set_score("12345".to_string())
-        .add_textarea("Debug info".to_string())
+        .add_textarea(VisTextArea::new("Title".to_string(), "Debug info".to_string()))
         .to_vis_string("test");
     assert!(output.contains("$v(test) GRID 3 3"));
     assert!(output.contains("$v(test) SCORE 12345"));
-    assert!(output.contains("$v(test) TEXTAREA Debug info"));
+    assert!(output.contains("$v(test) TEXTAREA Title 200 #000000 #ffffff Debug info"));
     assert!(output.contains("$v(test) COMMIT"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_textarea_basic() {
+    let textarea = VisTextArea::new("Info".to_string(), "Some debug information".to_string());
+    let output = VisFrame::new()
+        .add_textarea(textarea)
+        .to_vis_string("test");
+    assert!(output.contains("$v(test) TEXTAREA Info 200 #000000 #ffffff Some debug information"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_textarea_custom() {
+    let textarea = VisTextArea::new("CustomInfo".to_string(), "Custom message".to_string())
+        .height(300)
+        .text_color("#ff0000".to_string())
+        .fill_color("#ffff00".to_string());
+    let output = VisFrame::new()
+        .add_textarea(textarea)
+        .to_vis_string("test");
+    assert!(output.contains("$v(test) TEXTAREA CustomInfo 300 #ff0000 #ffff00 Custom message"));
 }
 
 #[cfg(feature = "vis")]
@@ -332,7 +355,7 @@ fn test_visroot_multiple_modes() {
         "debug",
         VisFrame::new()
             .add_grid(VisGrid::new(1, 1, None))
-            .add_textarea("Debug message".to_string()),
+            .add_textarea(VisTextArea::new("Debug".to_string(), "Debug message".to_string())),
     );
 
     assert_eq!(root.get_frames("main").unwrap().len(), 1);
@@ -527,7 +550,7 @@ mod vis_disabled_tests {
         let grid = VisGrid::new(3, 3, None);
         let output = VisFrame::new()
             .add_grid(grid)
-            .add_textarea("Debug info".to_string())
+            .add_textarea(VisTextArea::new("Info".to_string(), "Debug info".to_string()))
             .enable_debug()
             .disable_debug()
             .set_score("999".to_string())

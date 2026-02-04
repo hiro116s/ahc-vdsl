@@ -66,6 +66,10 @@ export interface GridCommand {
 
 export interface TextAreaCommand {
     type: 'TEXTAREA';
+    title: string;
+    height: number;
+    textColor: string;
+    fillColor: string;
     text: string;
 }
 

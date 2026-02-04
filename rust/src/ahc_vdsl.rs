@@ -111,11 +111,46 @@ pub mod ahc_vdsl {
             }
         }
 
+        pub struct VisTextArea {
+            title: String,
+            height: Option<u32>,
+            text_color: Option<String>,
+            fill_color: Option<String>,
+            text: String,
+        }
+
+        impl VisTextArea {
+            pub fn new(title: String, text: String) -> Self {
+                Self {
+                    title,
+                    height: Some(200),
+                    text_color: Some("#000000".to_string()),
+                    fill_color: Some("#ffffff".to_string()),
+                    text,
+                }
+            }
+
+            pub fn height(mut self, height: u32) -> Self {
+                self.height = Some(height);
+                self
+            }
+
+            pub fn text_color(mut self, color: String) -> Self {
+                self.text_color = Some(color);
+                self
+            }
+
+            pub fn fill_color(mut self, color: String) -> Self {
+                self.fill_color = Some(color);
+                self
+            }
+        }
+
         pub struct VisFrame {
             vis_canvas: Option<VisCanvas>,
             items: Vec<VisItem>,
             score: String,
-            textarea: Vec<String>,
+            textarea: Vec<VisTextArea>,
             bar_graphs: Vec<VisBarGraph>,
             with_debug: bool,
         }
@@ -157,8 +192,8 @@ pub mod ahc_vdsl {
                 self
             }
 
-            pub fn add_textarea(mut self, text: String) -> Self {
-                self.textarea.push(text);
+            pub fn add_textarea(mut self, textarea: VisTextArea) -> Self {
+                self.textarea.push(textarea);
                 self
             }
 
@@ -196,8 +231,15 @@ pub mod ahc_vdsl {
                 }
 
                 // Output textarea
-                for text in &self.textarea {
-                    writeln!(&mut output, "$v({mode}) TEXTAREA {text}").unwrap();
+                for textarea in &self.textarea {
+                    let height = textarea.height.unwrap_or(200);
+                    let text_color = textarea.text_color.as_deref().unwrap_or("#000000");
+                    let fill_color = textarea.fill_color.as_deref().unwrap_or("#ffffff");
+                    writeln!(
+                        &mut output,
+                        "$v({}) TEXTAREA {} {} {} {} {}",
+                        mode, textarea.title, height, text_color, fill_color, textarea.text
+                    ).unwrap();
                 }
 
                 // Output bar graphs
@@ -738,6 +780,31 @@ pub mod ahc_vdsl {
             File(PathBuf),
         }
 
+        // VisTextArea - Zero-Sized Type
+        pub struct VisTextArea;
+
+        impl VisTextArea {
+            #[inline(always)]
+            pub fn new(_title: String, _text: String) -> Self {
+                Self
+            }
+
+            #[inline(always)]
+            pub fn height(self, _height: u32) -> Self {
+                self
+            }
+
+            #[inline(always)]
+            pub fn text_color(self, _color: String) -> Self {
+                self
+            }
+
+            #[inline(always)]
+            pub fn fill_color(self, _color: String) -> Self {
+                self
+            }
+        }
+
         // VisRoot - Zero-Sized Type
         pub struct VisRoot;
 
@@ -823,7 +890,7 @@ pub mod ahc_vdsl {
             }
 
             #[inline(always)]
-            pub fn add_textarea(self, _text: String) -> Self {
+            pub fn add_textarea(self, _textarea: VisTextArea) -> Self {
                 self
             }
 
