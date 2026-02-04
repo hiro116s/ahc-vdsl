@@ -14,8 +14,11 @@
       "onAutoForward": "notify"
     }
   },
-  "postCreateCommand": "cd /workspace/visualizer && npm install",
+  "postCreateCommand": "cd /workspaces/ahc-vdsl/visualizer && npm install",
   "remoteUser": "dev",
+  "containerEnv": {
+    "ANTHROPIC_MODEL": "claude-sonnet-4-5-20250929"
+  },
   "customizations": {
     "vscode": {
       "extensions": [

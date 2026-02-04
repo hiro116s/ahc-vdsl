@@ -5,18 +5,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       g++ \
       make \
       zsh \
+      tmux \
       curl \
       gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------- GitHub CLI ----------
-RUN curl -fsSL https://cli.github.com/packages/pgp/cli.github.com.key \
-      | gpg --dearmor -o /usr/share/keyrings/cli-github-archive-keyring.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/cli-github-archive-keyring.gpg] \
-            https://cli.github.com/packages/deb stable main" \
-      | tee /etc/apt/sources.list.d/cli.github.list > /dev/null \
-    && apt-get update && apt-get install -y gh \
-    && rm -rf /var/lib/apt/lists/*
+RUN ARCH=$(dpkg --print-architecture) \
+    && LATEST=$(curl -fsSL -o /dev/null -w "%{url_effective}" \
+        https://github.com/cli/cli/releases/latest | sed 's|.*/||') \
+    && curl -fsSL \
+        "https://github.com/cli/cli/releases/download/${LATEST}/gh_${LATEST#v}_linux_${ARCH}.deb" \
+        -o /tmp/gh.deb \
+    && dpkg -i /tmp/gh.deb \
+    && rm /tmp/gh.deb
+
+# ---------- Claude Code ----------
+RUN npm install -g @anthropic-ai/claude-code
 
 # ---------- non-root user ----------
 RUN useradd -ms /bin/zsh dev
@@ -27,7 +32,4 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
       | sh -s -- -y --default-toolchain stable
 ENV PATH="/home/dev/.cargo/bin:${PATH}"
 
-# ---------- Claude Code ----------
-RUN npm install -g @anthropic-ai/claude-code
-
-WORKDIR /workspace
+WORKDIR /workspaces/ahc-vdsl
