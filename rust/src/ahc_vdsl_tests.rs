@@ -10,7 +10,7 @@ fn test_visgrid_new() {
 
     assert!(output.contains("$v(test) GRID 3 4"));
     assert!(output.contains("CELL_COLORS_POS"));
-    assert!(output.contains("CELL_TEXT"));
+    assert!(!output.contains("CELL_TEXT")); // すべてのセルが空なので省略される
     assert!(output.contains("LINES"));
 }
 
@@ -40,6 +40,32 @@ fn test_visgrid_update_text() {
         .update_text((1, 1), "hello".to_string())
         .to_vis_string("test");
     assert!(output.contains("hello"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_visgrid_cell_text_mid_empty() {
+    // 途中の空セルは "" で出力される
+    let output = VisGrid::new(2, 3, None)
+        .update_text((0, 0), "a".to_string())
+        .update_text((2, 0), "c".to_string())
+        .to_vis_string("test");
+    assert!(output.contains("CELL_TEXT"));
+    // Row 0: a "" c（中間の空セルが ""）
+    assert!(output.contains("a \"\" c"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_visgrid_cell_text_trailing_empty() {
+    // 末尾の空セルは省略される
+    let output = VisGrid::new(1, 3, None)
+        .update_text((0, 0), "hello".to_string())
+        .to_vis_string("test");
+    assert!(output.contains("CELL_TEXT"));
+    // "hello" の後ろの空セルが省略されるため、行は "hello\n"
+    assert!(output.contains("hello\n"));
+    assert!(!output.contains("hello "));
 }
 
 #[cfg(feature = "vis")]

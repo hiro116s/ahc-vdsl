@@ -591,13 +591,31 @@ pub mod ahc_vdsl {
                     }
                     writeln!(&mut s).unwrap();
                 }
-                // 各セルのテキストを書き込み
-                writeln!(&mut s, "CELL_TEXT").unwrap();
-                for y in 0..self.h {
-                    for x in 0..self.w {
-                        write!(&mut s, "{} ", self.cell_texts[y][x]).unwrap();
+                // 各セルのテキストを書き込み（すべて空の場合は省略）
+                let all_texts_empty = self
+                    .cell_texts
+                    .iter()
+                    .all(|row| row.iter().all(|t| t.is_empty()));
+                if !all_texts_empty {
+                    writeln!(&mut s, "CELL_TEXT").unwrap();
+                    for y in 0..self.h {
+                        // その行の末尾側の空セルは省略し、途中の空セルは "" で出力
+                        let last_non_empty =
+                            (0..self.w).rev().find(|&x| !self.cell_texts[y][x].is_empty());
+                        if let Some(last) = last_non_empty {
+                            for x in 0..=last {
+                                if x > 0 {
+                                    write!(&mut s, " ").unwrap();
+                                }
+                                if self.cell_texts[y][x].is_empty() {
+                                    write!(&mut s, "\"\"").unwrap();
+                                } else {
+                                    write!(&mut s, "{}", self.cell_texts[y][x]).unwrap();
+                                }
+                            }
+                        }
+                        writeln!(&mut s).unwrap();
                     }
-                    writeln!(&mut s).unwrap();
                 }
 
                 // 線分を書き込み
