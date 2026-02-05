@@ -681,16 +681,23 @@ function parseBarGraphCommand(
     pendingErrors: PendingErrors
 ): { lineIdx: number } {
     const paramStr = remaining.replace(/^BAR_GRAPH\s*/, '').trim();
-    const parts = paramStr.split(/\s+/);
+    // Parse parameters with support for quoted strings
+    const regex = /"([^"]*)"|([^\s]+)/g;
+    const parts: string[] = [];
+    let match;
+    while ((match = regex.exec(paramStr)) !== null) {
+        parts.push(match[1] !== undefined ? match[1] : match[2]);
+    }
 
-    if (parts.length < 3) {
-        pendingErrors[mode].push(`Line ${lineIdx + 1}: BAR_GRAPH requires 3 parameters (fill_color y_min y_max), got ${parts.length}`);
+    if (parts.length < 4) {
+        pendingErrors[mode].push(`Line ${lineIdx + 1}: BAR_GRAPH requires 4 parameters (title fill_color y_min y_max), got ${parts.length}`);
         return { lineIdx: lineIdx + 1 };
     }
 
-    const fillColor = parts[0];
-    const yMin = parseFloat(parts[1]);
-    const yMax = parseFloat(parts[2]);
+    const title = parts[0];
+    const fillColor = parts[1];
+    const yMin = parseFloat(parts[2]);
+    const yMax = parseFloat(parts[3]);
 
     if (isNaN(yMin) || isNaN(yMax)) {
         pendingErrors[mode].push(`Line ${lineIdx + 1}: BAR_GRAPH y_min and y_max must be numbers`);
@@ -740,6 +747,7 @@ function parseBarGraphCommand(
 
     const barGraphCommand: BarGraphCommand = {
         type: 'BAR_GRAPH',
+        title,
         fillColor,
         yMin,
         yMax,

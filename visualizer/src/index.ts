@@ -604,7 +604,18 @@ function initMainPage(): void {
                 container.appendChild(ta);
                 infoDiv.appendChild(container);
             } else if (cmd.type === 'BAR_GRAPH') {
-                renderBarGraph(infoDiv, cmd as BarGraphCommand);
+                const container = document.createElement('div');
+                container.style.marginBottom = '10px';
+
+                const titleLabel = document.createElement('div');
+                titleLabel.textContent = cmd.title;
+                titleLabel.style.fontWeight = 'bold';
+                titleLabel.style.marginBottom = '4px';
+                titleLabel.style.fontSize = '14px';
+                container.appendChild(titleLabel);
+
+                renderBarGraph(container, cmd as BarGraphCommand);
+                infoDiv.appendChild(container);
             } else if (cmd.type === 'SCORE') {
                 scoreDisplay.textContent = `Score = ${cmd.score}`;
             }

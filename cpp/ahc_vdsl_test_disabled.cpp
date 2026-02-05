@@ -164,7 +164,7 @@ void test_color_display_is_empty() {
 }
 
 void test_bar_graph_operations_compile() {
-    VisBarGraph bg(RED, 0.0, 100.0);
+    VisBarGraph bg("Test", RED, 0.0, 100.0);
     bg.add_item("A", 50.0);
     bg.add_items({BarGraphItem("B", 75.0)});
     std::string output = bg.to_vis_string("test");
@@ -173,7 +173,7 @@ void test_bar_graph_operations_compile() {
 }
 
 void test_frame_add_bar_graph_compiles() {
-    VisBarGraph bg(GREEN, 0.0, 100.0);
+    VisBarGraph bg("Test", GREEN, 0.0, 100.0);
     VisFrame frame;
     frame.add_bar_graph(bg);
 

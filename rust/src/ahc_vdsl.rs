@@ -785,6 +785,7 @@ pub mod ahc_vdsl {
         }
 
         pub struct VisBarGraph {
+            title: String,
             fill_color: Color,
             y_min: f64,
             y_max: f64,
@@ -792,8 +793,9 @@ pub mod ahc_vdsl {
         }
 
         impl VisBarGraph {
-            pub fn new(fill_color: Color, y_min: f64, y_max: f64) -> Self {
+            pub fn new(title: String, fill_color: Color, y_min: f64, y_max: f64) -> Self {
                 Self {
+                    title,
                     fill_color,
                     y_min,
                     y_max,
@@ -814,10 +816,16 @@ pub mod ahc_vdsl {
             pub fn to_vis_string(&self, mode: &str) -> String {
                 let mut s = String::new();
 
+                let title_output = if self.title.contains(' ') || self.title.is_empty() {
+                    format!("\"{}\"", self.title)
+                } else {
+                    self.title.clone()
+                };
+
                 writeln!(
                     &mut s,
-                    "$v({}) BAR_GRAPH {} {} {}",
-                    mode, self.fill_color, self.y_min, self.y_max
+                    "$v({}) BAR_GRAPH {} {} {} {}",
+                    mode, title_output, self.fill_color, self.y_min, self.y_max
                 )
                 .unwrap();
 
@@ -1269,7 +1277,7 @@ pub mod ahc_vdsl {
 
         impl VisBarGraph {
             #[inline(always)]
-            pub fn new(_fill_color: Color, _y_min: f64, _y_max: f64) -> Self {
+            pub fn new(_title: String, _fill_color: Color, _y_min: f64, _y_max: f64) -> Self {
                 Self
             }
 

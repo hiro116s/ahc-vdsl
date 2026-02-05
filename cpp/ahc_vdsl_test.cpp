@@ -533,14 +533,32 @@ void test_visroot_file_output_multiple_modes() {
 }
 
 void test_bar_graph_basic() {
-    VisBarGraph bg(BLUE, 0.0, 100.0);
+    VisBarGraph bg("Stats", BLUE, 0.0, 100.0);
     bg.add_item("A", 50.0);
     bg.add_item("B", 75.0);
 
     std::string output = bg.to_vis_string("test");
-    assert(contains(output, "$v(test) BAR_GRAPH #0000FF 0 100"));
+    assert(contains(output, "$v(test) BAR_GRAPH Stats #0000FF 0 100"));
     assert(contains(output, "2 A 50 B 75"));
     std::cout << "✓ test_bar_graph_basic passed\n";
+}
+
+void test_bar_graph_title_with_space() {
+    VisBarGraph bg("My Stats", BLUE, 0.0, 100.0);
+    bg.add_item("A", 50.0);
+
+    std::string output = bg.to_vis_string("test");
+    assert(contains(output, "$v(test) BAR_GRAPH \"My Stats\" #0000FF 0 100"));
+    std::cout << "✓ test_bar_graph_title_with_space passed\n";
+}
+
+void test_bar_graph_empty_title() {
+    VisBarGraph bg("", RED, 0.0, 50.0);
+    bg.add_item("X", 25.0);
+
+    std::string output = bg.to_vis_string("test");
+    assert(contains(output, "$v(test) BAR_GRAPH \"\" #FF0000 0 50"));
+    std::cout << "✓ test_bar_graph_empty_title passed\n";
 }
 
 void test_bar_graph_add_items() {
@@ -550,17 +568,17 @@ void test_bar_graph_add_items() {
         BarGraphItem("Z", 7.5)
     };
 
-    VisBarGraph bg(RED, -10.0, 10.0);
+    VisBarGraph bg("Values", RED, -10.0, 10.0);
     bg.add_items(items);
 
     std::string output = bg.to_vis_string("test");
-    assert(contains(output, "$v(test) BAR_GRAPH #FF0000 -10 10"));
+    assert(contains(output, "$v(test) BAR_GRAPH Values #FF0000 -10 10"));
     assert(contains(output, "3 X -5 Y 0 Z 7.5"));
     std::cout << "✓ test_bar_graph_add_items passed\n";
 }
 
 void test_frame_add_bar_graph() {
-    VisBarGraph bg(GREEN, 0.0, 200.0);
+    VisBarGraph bg("Performance", GREEN, 0.0, 200.0);
     bg.add_item("Item1", 100.0);
     bg.add_item("Item2", 150.0);
 
@@ -569,7 +587,7 @@ void test_frame_add_bar_graph() {
     frame.set_score("12345");
 
     std::string output = frame.to_vis_string("main");
-    assert(contains(output, "$v(main) BAR_GRAPH #00FF00 0 200"));
+    assert(contains(output, "$v(main) BAR_GRAPH Performance #00FF00 0 200"));
     assert(contains(output, "2 Item1 100 Item2 150"));
     assert(contains(output, "$v(main) SCORE 12345"));
     assert(contains(output, "$v(main) COMMIT"));
@@ -621,10 +639,12 @@ int main() {
     test_visroot_file_output();
     test_visroot_file_output_multiple_modes();
     test_bar_graph_basic();
+    test_bar_graph_title_with_space();
+    test_bar_graph_empty_title();
     test_bar_graph_add_items();
     test_frame_add_bar_graph();
     test_bar_graph_item_new();
 
-    std::cout << "\n✅ All 38 tests passed!\n";
+    std::cout << "\n✅ All 40 tests passed!\n";
     return 0;
 }

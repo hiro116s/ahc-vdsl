@@ -256,10 +256,11 @@ $v(debug) TEXTAREA DebugInfo 300 #ff0000 #ffff00 Debug message with custom heigh
 
 **構文:**
 ```text
-$v(MODE) BAR_GRAPH [fill_color] [y_min] [y_max]
+$v(MODE) BAR_GRAPH [title] [fill_color] [y_min] [y_max]
 [n] [label1] [value1] [label2] [value2] ...
 ```
 
+- `title`: バーグラフのタイトル（上部に表示、スペースを含む場合はダブルクォートで囲む）
 - `fill_color`: バーの塗りつぶし色（例: `#0000FF`, `blue`）
 - `y_min`: Y軸の最小値
 - `y_max`: Y軸の最大値
@@ -269,7 +270,7 @@ $v(MODE) BAR_GRAPH [fill_color] [y_min] [y_max]
 
 **使用例:**
 ```text
-$v(main) BAR_GRAPH #4169E1 0 100
+$v(main) BAR_GRAPH Performance #4169E1 0 100
 3 Speed 85.5 Accuracy 92.0 Coverage 78.3
 $v(main) COMMIT
 ```

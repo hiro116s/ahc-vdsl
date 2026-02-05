@@ -697,12 +697,30 @@ mod vis_disabled_tests {
 #[cfg(feature = "vis")]
 #[test]
 fn test_bar_graph_basic() {
-    let output = VisBarGraph::new(BLUE, 0.0, 100.0)
+    let output = VisBarGraph::new("Stats".to_string(), BLUE, 0.0, 100.0)
         .add_item("A".to_string(), 50.0)
         .add_item("B".to_string(), 75.0)
         .to_vis_string("test");
-    assert!(output.contains("$v(test) BAR_GRAPH #0000FF 0 100"));
+    assert!(output.contains("$v(test) BAR_GRAPH Stats #0000FF 0 100"));
     assert!(output.contains("2 A 50 B 75"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_bar_graph_title_with_space() {
+    let output = VisBarGraph::new("My Stats".to_string(), BLUE, 0.0, 100.0)
+        .add_item("A".to_string(), 50.0)
+        .to_vis_string("test");
+    assert!(output.contains("$v(test) BAR_GRAPH \"My Stats\" #0000FF 0 100"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_bar_graph_empty_title() {
+    let output = VisBarGraph::new("".to_string(), RED, 0.0, 50.0)
+        .add_item("X".to_string(), 25.0)
+        .to_vis_string("test");
+    assert!(output.contains("$v(test) BAR_GRAPH \"\" #FF0000 0 50"));
 }
 
 #[cfg(feature = "vis")]
@@ -713,10 +731,10 @@ fn test_bar_graph_add_items() {
         BarGraphItem::new("Y".to_string(), 0.0),
         BarGraphItem::new("Z".to_string(), 7.5),
     ];
-    let output = VisBarGraph::new(RED, -10.0, 10.0)
+    let output = VisBarGraph::new("Values".to_string(), RED, -10.0, 10.0)
         .add_items(items)
         .to_vis_string("test");
-    assert!(output.contains("$v(test) BAR_GRAPH #FF0000 -10 10"));
+    assert!(output.contains("$v(test) BAR_GRAPH Values #FF0000 -10 10"));
     assert!(output.contains("3 X -5 Y 0 Z 7.5"));
 }
 
@@ -725,13 +743,13 @@ fn test_bar_graph_add_items() {
 fn test_frame_add_bar_graph() {
     let output = VisFrame::new()
         .add_bar_graph(
-            VisBarGraph::new(GREEN, 0.0, 200.0)
+            VisBarGraph::new("Performance".to_string(), GREEN, 0.0, 200.0)
                 .add_item("Item1".to_string(), 100.0)
                 .add_item("Item2".to_string(), 150.0),
         )
         .set_score("12345".to_string())
         .to_vis_string("main");
-    assert!(output.contains("$v(main) BAR_GRAPH #00FF00 0 200"));
+    assert!(output.contains("$v(main) BAR_GRAPH Performance #00FF00 0 200"));
     assert!(output.contains("2 Item1 100 Item2 150"));
     assert!(output.contains("$v(main) SCORE 12345"));
     assert!(output.contains("$v(main) COMMIT"));
@@ -751,7 +769,7 @@ mod bar_graph_disabled_tests {
 
     #[test]
     fn test_bar_graph_operations_compile() {
-        let output = VisBarGraph::new(RED, 0.0, 100.0)
+        let output = VisBarGraph::new("Test".to_string(), RED, 0.0, 100.0)
             .add_item("A".to_string(), 50.0)
             .add_items(vec![BarGraphItem::new("B".to_string(), 75.0)])
             .to_vis_string("test");
@@ -760,7 +778,7 @@ mod bar_graph_disabled_tests {
 
     #[test]
     fn test_frame_add_bar_graph_compiles() {
-        let bar_graph = VisBarGraph::new(GREEN, 0.0, 100.0);
+        let bar_graph = VisBarGraph::new("Test".to_string(), GREEN, 0.0, 100.0);
         let output = VisFrame::new()
             .add_bar_graph(bar_graph)
             .to_vis_string("test");

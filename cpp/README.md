@@ -169,7 +169,7 @@ root.output_all();  // output.txt に書き込まれる
 #### 8. バーグラフの表示
 
 ```cpp
-VisBarGraph bar_graph(BLUE, 0.0, 100.0);
+VisBarGraph bar_graph("Performance", BLUE, 0.0, 100.0);
 bar_graph.add_item("Speed", 85.5)
          .add_item("Accuracy", 92.0)
          .add_item("Coverage", 78.3);
@@ -236,18 +236,21 @@ textarea.set_height(300)                     // 高さ（オプション、デ�
 
 #### VisBarGraph
 
-バーグラフを作成し、データを追加します。
+バーグラフを作成し、データを追加します。タイトルにスペースが含まれる場合は自動的にダブルクォートで囲まれます。
 
 ```cpp
-VisBarGraph bar_graph(BLUE, 0.0, 100.0);  // 色、Y軸最小値、Y軸最大値
+VisBarGraph bar_graph("Stats", BLUE, 0.0, 100.0);  // タイトル、色、Y軸最小値、Y軸最大値
+VisBarGraph bar_graph2("My Stats", BLUE, 0.0, 100.0);  // スペースを含むタイトルも可
 
 // 個別に追加（method chaining 対応）
 bar_graph.add_item("Label1", 50.0)
          .add_item("Label2", 75.0);
 
 // 出力されるDSL:
-// $v(MODE) BAR_GRAPH #0000FF 0 100
+// $v(MODE) BAR_GRAPH Stats #0000FF 0 100
 // 2 Label1 50 Label2 75
+// タイトルにスペースがある場合:
+// $v(MODE) BAR_GRAPH "My Stats" #0000FF 0 100
 
 // まとめて追加する場合は add_items を使用（こちらも chaining 対応）
 std::vector<BarGraphItem> items = {

@@ -146,6 +146,7 @@ export interface BarGraphItem {
 
 export interface BarGraphCommand {
     type: 'BAR_GRAPH';
+    title: string;
     fillColor: string;
     yMin: number;
     yMax: number;

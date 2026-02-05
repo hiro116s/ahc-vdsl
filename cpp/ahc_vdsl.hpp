@@ -103,13 +103,14 @@ struct BarGraphItem {
 };
 
 class VisBarGraph {
+    std::string title;
     Color fill_color;
     double y_min, y_max;
     std::vector<BarGraphItem> items;
 
 public:
-    VisBarGraph(Color fill_color, double y_min, double y_max)
-        : fill_color(fill_color), y_min(y_min), y_max(y_max) {}
+    VisBarGraph(const std::string& title, Color fill_color, double y_min, double y_max)
+        : title(title), fill_color(fill_color), y_min(y_min), y_max(y_max) {}
 
     VisBarGraph& add_item(const std::string& label, double value) {
         items.emplace_back(label, value);
@@ -123,7 +124,13 @@ public:
 
     std::string to_vis_string(const std::string& mode) const {
         std::ostringstream ss;
-        ss << "$v(" << mode << ") BAR_GRAPH " << fill_color.to_string()
+        ss << "$v(" << mode << ") BAR_GRAPH ";
+        if (title.find(' ') != std::string::npos || title.empty()) {
+            ss << "\"" << title << "\"";
+        } else {
+            ss << title;
+        }
+        ss << " " << fill_color.to_string()
            << " " << y_min << " " << y_max << "\n";
         ss << items.size();
         for (const auto& item : items) {
@@ -638,7 +645,7 @@ struct BarGraphItem {
 
 class VisBarGraph {
 public:
-    VisBarGraph(Color = Color(), double = 0, double = 0) {}
+    VisBarGraph(const std::string& = "", Color = Color(), double = 0, double = 0) {}
     VisBarGraph& add_item(const std::string&, double) { return *this; }
     VisBarGraph& add_items(const std::vector<BarGraphItem>&) { return *this; }
     std::string to_vis_string(const std::string&) const { return ""; }
