@@ -40,13 +40,6 @@ cargo run
 ```rust
 use crate::ahc_vdsl::*;
 
-### 基本的な使い方
-
-#### 1. シンプルなグリッド表示
-
-```rust
-use ahc_vdsl::ahc_vdsl::*;
-
 fn main() {
     let mut vis = VisRoot::new();
 
