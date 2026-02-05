@@ -323,11 +323,18 @@ class Vis2DPlane {
         std::vector<std::pair<double, double>> vertices;
     };
 
+    struct TextItem {
+        double x, y;
+        std::string text;
+    };
+
     // Circles grouped by (stroke_color, fill_color)
     std::map<std::pair<Color, Color>, std::vector<Circle>> circle_groups;
     // Lines grouped by (color, width)
     std::map<std::pair<Color, double>, std::vector<Segment>> line_groups;
     std::vector<PolygonGroup> polygon_groups;
+    // Text grouped by (color, font_size)
+    std::map<std::pair<Color, double>, std::vector<TextItem>> text_groups;
     std::optional<ItemBounds> bounds;
 
 public:
@@ -356,6 +363,10 @@ public:
     void add_polygon(Color stroke_color, Color fill_color,
                      const std::vector<std::pair<double, double>>& vertices) {
         polygon_groups.push_back({stroke_color, fill_color, vertices});
+    }
+
+    void add_text(Color color, double font_size, double x, double y, const std::string& text) {
+        text_groups[{color, font_size}].push_back({x, y, text});
     }
 
     std::string to_vis_string(const std::string& mode) const {
@@ -411,6 +422,24 @@ public:
                    << group.vertices.size();
                 for (const auto& [x, y] : group.vertices) {
                     ss << " " << x << " " << y;
+                }
+                ss << "\n";
+            }
+        }
+
+        // TEXT
+        if (!text_groups.empty()) {
+            ss << "TEXT\n";
+            ss << text_groups.size() << "\n";
+            for (const auto& [key, texts] : text_groups) {
+                const auto& [color, font_size] = key;
+                ss << color.to_string() << " " << font_size << " " << texts.size();
+                for (const auto& item : texts) {
+                    if (item.text.find(' ') != std::string::npos || item.text.empty()) {
+                        ss << " " << item.x << " " << item.y << " \"" << item.text << "\"";
+                    } else {
+                        ss << " " << item.x << " " << item.y << " " << item.text;
+                    }
                 }
                 ss << "\n";
             }
@@ -644,6 +673,7 @@ public:
     void add_line(Color, double, double, double, double, double) {}
     void add_line_group(Color, double, const std::vector<std::pair<double, double>>&) {}
     void add_polygon(Color, Color, const std::vector<std::pair<double, double>>&) {}
+    void add_text(Color, double, double, double, const std::string&) {}
     std::string to_vis_string(const std::string&) const { return ""; }
 };
 

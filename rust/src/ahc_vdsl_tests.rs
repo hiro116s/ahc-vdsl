@@ -197,6 +197,40 @@ fn test_vis2dplane_add_polygon() {
 
 #[cfg(feature = "vis")]
 #[test]
+fn test_vis2dplane_add_text() {
+    let output = Vis2DPlane::new(100.0, 100.0, None)
+        .add_text(BLACK, 12.0, 50.0, 50.0, "Hello".to_string())
+        .to_vis_string("test");
+    assert!(output.contains("TEXT"));
+    assert!(output.contains("#000000")); // BLACK color
+    assert!(output.contains("12")); // font size
+    assert!(output.contains("50 50 Hello"));
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_vis2dplane_add_text_with_space() {
+    let output = Vis2DPlane::new(100.0, 100.0, None)
+        .add_text(RED, 16.0, 25.0, 75.0, "Hello World".to_string())
+        .to_vis_string("test");
+    assert!(output.contains("TEXT"));
+    assert!(output.contains("\"Hello World\"")); // quoted text with space
+}
+
+#[cfg(feature = "vis")]
+#[test]
+fn test_vis2dplane_text_grouping() {
+    // 同じ色とフォントサイズのテキストは1つのグループにまとめられることを確認
+    let output = Vis2DPlane::new(100.0, 100.0, None)
+        .add_text(RED, 12.0, 10.0, 10.0, "A".to_string())
+        .add_text(RED, 12.0, 20.0, 20.0, "B".to_string())
+        .add_text(BLUE, 12.0, 30.0, 30.0, "C".to_string())
+        .to_vis_string("test");
+    assert!(output.contains("TEXT\n2\n")); // 2 groups (RED and BLUE)
+}
+
+#[cfg(feature = "vis")]
+#[test]
 fn test_vis2dplane_circle_grouping() {
     // 同じ色の円を複数追加すると、1つのグループにまとめられることを確認
     let output = Vis2DPlane::new(100.0, 100.0, None)

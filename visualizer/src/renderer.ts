@@ -1,4 +1,4 @@
-import { GridCommand, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, BarGraphCommand } from './types';
+import { GridCommand, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, TextGroup, BarGraphCommand } from './types';
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -270,6 +270,7 @@ export function render2DPlane(
     circleGroups: CircleGroup[],
     lineGroups: LineGroup[],
     polygonGroups: PolygonGroup[],
+    textGroups: TextGroup[],
     left: number = 0,
     top: number = 0,
     right: number = 800,
@@ -370,6 +371,27 @@ export function render2DPlane(
         }
     }
 
+    // Render text
+    for (const textGroup of textGroups) {
+        const { color, fontSize, texts } = textGroup;
+
+        for (const textItem of texts) {
+            const tx = (textItem.x / W) * drawWidth;
+            const ty = (textItem.y / H) * drawHeight;
+
+            const textElement = document.createElementNS(SVG_NS, "text");
+            textElement.setAttribute("x", String(tx));
+            textElement.setAttribute("y", String(ty));
+            textElement.setAttribute("fill", color);
+            textElement.setAttribute("font-size", String(fontSize));
+            textElement.setAttribute("text-anchor", "middle");
+            textElement.setAttribute("dominant-baseline", "middle");
+            textElement.textContent = textItem.text;
+
+            g.appendChild(textElement);
+        }
+    }
+
     svg.appendChild(g);
 }
 
@@ -382,6 +404,7 @@ export function render2DPlaneFromCommand(svg: SVGSVGElement, cmd: TwoDPlaneComma
         cmd.circleGroups,
         cmd.lineGroups,
         cmd.polygonGroups,
+        cmd.textGroups,
         bounds.left,
         bounds.top,
         bounds.right,

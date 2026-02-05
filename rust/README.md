@@ -134,7 +134,9 @@ let plane = Vis2DPlane::new(100.0, 100.0, None)
         (90.0, 10.0),
         (90.0, 90.0),
         (10.0, 90.0),
-    ]);
+    ])
+    // テキストを追加
+    .add_text(BLACK, 12.0, 50.0, 50.0, "Center".to_string());
 
 let frame = VisFrame::new()
     .add_2d_plane(plane)

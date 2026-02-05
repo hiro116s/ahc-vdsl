@@ -1,4 +1,4 @@
-import { ParsedModes, Frame, GridCommand, Command, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, CanvasCommand, ItemBounds, BarGraphCommand, BarGraphItem } from './types';
+import { ParsedModes, Frame, GridCommand, Command, GridLine, TwoDPlaneCommand, CircleGroup, LineGroup, PolygonGroup, TextGroup, TextItem, CanvasCommand, ItemBounds, BarGraphCommand, BarGraphItem } from './types';
 
 interface PendingCommands {
     [mode: string]: Command[];
@@ -494,6 +494,7 @@ function parse2DPlaneCommand(
     const circleGroups: CircleGroup[] = [];
     const lineGroups: LineGroup[] = [];
     const polygonGroups: PolygonGroup[] = [];
+    const textGroups: TextGroup[] = [];
 
     lineIdx++;
 
@@ -505,7 +506,7 @@ function parse2DPlaneCommand(
             header = lines[lineIdx].trim();
         }
 
-        if (header !== 'CIRCLES' && header !== 'LINES' && header !== 'POLYGONS') {
+        if (header !== 'CIRCLES' && header !== 'LINES' && header !== 'POLYGONS' && header !== 'TEXT') {
             break;
         }
 
@@ -615,13 +616,54 @@ function parse2DPlaneCommand(
                     lineIdx++;
                 }
             }
+        } else if (header === 'TEXT') {
+            lineIdx++;
+            if (lineIdx < lines.length) {
+                pendingRawText[mode] += lines[lineIdx] + "\n";
+                const tn = parseInt(lines[lineIdx].trim());
+                lineIdx++;
+                for (let k = 0; k < tn; k++) {
+                    if (lineIdx >= lines.length) break;
+                    pendingRawText[mode] += lines[lineIdx] + "\n";
+                    const lLine = lines[lineIdx].trim();
+                    // Parse: color fontSize textCount x0 y0 t0 x1 y1 t1 ...
+                    // Text can contain spaces, so we need to parse carefully
+                    const regex = /"([^"]*)"|([^\s]+)/g;
+                    const tokens: string[] = [];
+                    let match;
+                    while ((match = regex.exec(lLine)) !== null) {
+                        tokens.push(match[1] !== undefined ? match[1] : match[2]);
+                    }
+                    if (tokens.length >= 3) {
+                        const color = tokens[0];
+                        const fontSize = parseFloat(tokens[1]);
+                        const textCount = parseInt(tokens[2]);
+                        const texts: TextItem[] = [];
+                        for (let j = 0; j < textCount; j++) {
+                            const baseIdx = 3 + j * 3;
+                            if (baseIdx + 2 < tokens.length) {
+                                const x = parseFloat(tokens[baseIdx]);
+                                const y = parseFloat(tokens[baseIdx + 1]);
+                                const text = tokens[baseIdx + 2];
+                                if (!isNaN(x) && !isNaN(y)) {
+                                    texts.push({ x, y, text });
+                                }
+                            }
+                        }
+                        if (texts.length > 0) {
+                            textGroups.push({ color, fontSize: isNaN(fontSize) ? 12 : fontSize, texts });
+                        }
+                    }
+                    lineIdx++;
+                }
+            }
         }
     }
 
     const twoDPlaneCommand: TwoDPlaneCommand = {
         type: '2D_PLANE',
         H, W,
-        circleGroups, lineGroups, polygonGroups,
+        circleGroups, lineGroups, polygonGroups, textGroups,
         bounds
     };
 

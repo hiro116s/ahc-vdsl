@@ -129,6 +129,8 @@ plane.add_line(BLUE, 2.0, 0.0, 0.0, 100.0, 100.0);
 plane.add_polygon(GREEN, YELLOW, {
     {10.0, 10.0}, {90.0, 10.0}, {90.0, 90.0}, {10.0, 90.0}
 });
+// テキストを追加
+plane.add_text(BLACK, 12.0, 50.0, 50.0, "Center");
 
 VisFrame frame;
 frame.add_2d_plane(plane);

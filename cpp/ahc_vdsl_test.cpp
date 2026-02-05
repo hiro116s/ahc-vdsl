@@ -202,6 +202,40 @@ void test_vis2dplane_add_polygon() {
     std::cout << "✓ test_vis2dplane_add_polygon passed\n";
 }
 
+void test_vis2dplane_add_text() {
+    Vis2DPlane plane(100.0, 100.0);
+    plane.add_text(BLACK, 12.0, 50.0, 50.0, "Hello");
+
+    std::string output = plane.to_vis_string("test");
+    assert(contains(output, "TEXT"));
+    assert(contains(output, "#000000")); // BLACK color
+    assert(contains(output, "12")); // font size
+    assert(contains(output, "50 50 Hello"));
+    std::cout << "✓ test_vis2dplane_add_text passed\n";
+}
+
+void test_vis2dplane_add_text_with_space() {
+    Vis2DPlane plane(100.0, 100.0);
+    plane.add_text(RED, 16.0, 25.0, 75.0, "Hello World");
+
+    std::string output = plane.to_vis_string("test");
+    assert(contains(output, "TEXT"));
+    assert(contains(output, "\"Hello World\"")); // quoted text with space
+    std::cout << "✓ test_vis2dplane_add_text_with_space passed\n";
+}
+
+void test_vis2dplane_text_grouping() {
+    // Same-color and same-font-size texts are grouped into one group
+    Vis2DPlane plane(100.0, 100.0);
+    plane.add_text(RED, 12.0, 10.0, 10.0, "A");
+    plane.add_text(RED, 12.0, 20.0, 20.0, "B");
+    plane.add_text(BLUE, 12.0, 30.0, 30.0, "C");
+
+    std::string output = plane.to_vis_string("test");
+    assert(contains(output, "TEXT\n2\n")); // 2 groups (RED and BLUE)
+    std::cout << "✓ test_vis2dplane_text_grouping passed\n";
+}
+
 void test_vis2dplane_circle_grouping() {
     // Same-color circles are grouped into one group
     Vis2DPlane plane(100.0, 100.0);
@@ -569,6 +603,9 @@ int main() {
     test_vis2dplane_add_circle();
     test_vis2dplane_add_line();
     test_vis2dplane_add_polygon();
+    test_vis2dplane_add_text();
+    test_vis2dplane_add_text_with_space();
+    test_vis2dplane_text_grouping();
     test_vis2dplane_circle_grouping();
     test_vis2dplane_line_grouping();
     test_visframe_new();
@@ -588,6 +625,6 @@ int main() {
     test_frame_add_bar_graph();
     test_bar_graph_item_new();
 
-    std::cout << "\n✅ All 34 tests passed!\n";
+    std::cout << "\n✅ All 38 tests passed!\n";
     return 0;
 }

@@ -110,6 +110,18 @@ export interface PolygonGroup {
     polygon: Polygon;
 }
 
+export interface TextItem {
+    x: number;
+    y: number;
+    text: string;
+}
+
+export interface TextGroup {
+    color: string;
+    fontSize: number;
+    texts: TextItem[];
+}
+
 export interface TwoDPlaneCommand {
     type: '2D_PLANE';
     H: number;
@@ -117,6 +129,7 @@ export interface TwoDPlaneCommand {
     circleGroups: CircleGroup[];
     lineGroups: LineGroup[];
     polygonGroups: PolygonGroup[];
+    textGroups: TextGroup[];
     bounds?: ItemBounds; // Optional bounds within canvas
 }
 

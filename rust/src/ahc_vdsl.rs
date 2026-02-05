@@ -295,6 +295,7 @@ pub mod ahc_vdsl {
             circle_groups: FxHashMap<(Color, Color), Vec<Circle>>,
             line_groups: FxHashMap<(Color, u64), (f64, Vec<((f64, f64), (f64, f64))>)>,
             polygon_groups: Vec<PolygonGroup>,
+            text_groups: FxHashMap<(Color, u64), (f64, Vec<TextItem>)>,
             bounds: Option<ItemBounds>,
         }
 
@@ -310,6 +311,12 @@ pub mod ahc_vdsl {
             vertices: Vec<(f64, f64)>,
         }
 
+        pub struct TextItem {
+            x: f64,
+            y: f64,
+            text: String,
+        }
+
         impl Vis2DPlane {
             pub fn new(h: f64, w: f64, bounds: Option<ItemBounds>) -> Self {
                 Self {
@@ -318,6 +325,7 @@ pub mod ahc_vdsl {
                     circle_groups: FxHashMap::default(),
                     line_groups: FxHashMap::default(),
                     polygon_groups: Vec::new(),
+                    text_groups: FxHashMap::default(),
                     bounds,
                 }
             }
@@ -407,6 +415,23 @@ pub mod ahc_vdsl {
                 self
             }
 
+            pub fn add_text(
+                mut self,
+                color: Color,
+                font_size: f64,
+                x: f64,
+                y: f64,
+                text: String,
+            ) -> Self {
+                let font_size_key = font_size.to_bits();
+                let entry = self
+                    .text_groups
+                    .entry((color, font_size_key))
+                    .or_insert_with(|| (font_size, Vec::new()));
+                entry.1.push(TextItem { x, y, text });
+                self
+            }
+
             pub fn to_vis_string(&self, mode: &str) -> String {
                 let mut s = String::new();
 
@@ -464,6 +489,23 @@ pub mod ahc_vdsl {
                         .unwrap();
                         for (x, y) in &group.vertices {
                             write!(&mut s, " {x} {y}").unwrap();
+                        }
+                        writeln!(&mut s).unwrap();
+                    }
+                }
+
+                // Output text
+                if !self.text_groups.is_empty() {
+                    writeln!(&mut s, "TEXT").unwrap();
+                    writeln!(&mut s, "{}", self.text_groups.len()).unwrap();
+                    for ((color, _font_size_key), (font_size, texts)) in &self.text_groups {
+                        write!(&mut s, "{} {} {}", color, font_size, texts.len()).unwrap();
+                        for item in texts {
+                            if item.text.contains(' ') || item.text.is_empty() {
+                                write!(&mut s, " {} {} \"{}\"", item.x, item.y, item.text).unwrap();
+                            } else {
+                                write!(&mut s, " {} {} {}", item.x, item.y, item.text).unwrap();
+                            }
                         }
                         writeln!(&mut s).unwrap();
                     }
@@ -1062,6 +1104,18 @@ pub mod ahc_vdsl {
                 _stroke_color: Color,
                 _fill_color: Color,
                 _vertices: Vec<(f64, f64)>,
+            ) -> Self {
+                self
+            }
+
+            #[inline(always)]
+            pub fn add_text(
+                self,
+                _color: Color,
+                _font_size: f64,
+                _x: f64,
+                _y: f64,
+                _text: String,
             ) -> Self {
                 self
             }

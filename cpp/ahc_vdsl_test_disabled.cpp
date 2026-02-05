@@ -56,6 +56,7 @@ void test_vis2dplane_operations_compile() {
         {10.0, 10.0}, {90.0, 10.0}, {90.0, 90.0}, {10.0, 90.0}
     };
     plane.add_polygon(RED, YELLOW, vertices);
+    plane.add_text(BLACK, 12.0, 50.0, 50.0, "Hello");
 
     std::string output = plane.to_vis_string("test");
     assert(output.empty());
