@@ -239,7 +239,8 @@ pub mod ahc_vdsl {
                         &mut output,
                         "$v({}) TEXTAREA {} {} {} {} {}",
                         mode, textarea.title, height, text_color, fill_color, textarea.text
-                    ).unwrap();
+                    )
+                    .unwrap();
                 }
 
                 // Output bar graphs
@@ -600,8 +601,9 @@ pub mod ahc_vdsl {
                     writeln!(&mut s, "CELL_TEXT").unwrap();
                     for y in 0..self.h {
                         // その行の末尾側の空セルは省略し、途中の空セルは "" で出力
-                        let last_non_empty =
-                            (0..self.w).rev().find(|&x| !self.cell_texts[y][x].is_empty());
+                        let last_non_empty = (0..self.w)
+                            .rev()
+                            .find(|&x| !self.cell_texts[y][x].is_empty());
                         if let Some(last) = last_non_empty {
                             for x in 0..=last {
                                 if x > 0 {
