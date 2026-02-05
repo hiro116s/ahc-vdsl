@@ -1,7 +1,7 @@
 .PHONY: test test-enabled test-disabled clean
 
 CXX = g++
-CXXFLAGS = -std=c++17 -O2 -Wall -Wextra
+CXXFLAGS = -std=c++23 -O2 -Wall -Wextra
 
 test: test-enabled test-disabled
 

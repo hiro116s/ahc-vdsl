@@ -1,174 +1,278 @@
-# AHC VDSL - C++ Implementation
 
-AtCoder Heuristic Contest用のVisualization Domain Specific Language（C++版）
+---
 
-## 特徴
+## C++ ライブラリ (`ahc_vdsl.hpp`) の使い方
 
-- **Rustの実装と同等の機能**
-- **AtCoderで使用可能**（標準ライブラリのみ使用）
-- **Feature flagによるon/off切り替え**
-- **ゼロコスト抽象化**（visualization無効時）
+`cpp/ahc_vdsl.hpp` を使うと、プロトコル仕様を意識せずに型安全にビジュアライザ出力を生成できます。
 
-## 使い方
+### セットアップ
 
-### 基本的な使用方法
-
-1. `ahc_vdsl.hpp` をコピーして自分のプロジェクトに追加
-
-2. コード内でインクルード:
+AtCoderでは1つのファイルに全コードを含める必要があるため、`ahc_vdsl.hpp` を直接 `#include` するのではなく、その内容を提出コードの末尾にコピーペーストします。
 
 ```cpp
-#define ENABLE_VIS  // visualization を有効にする場合
-#include "ahc_vdsl.hpp"
-
 using namespace ahc_vdsl;
-```
-
-### Visualization有効時
-
-```cpp
-#define ENABLE_VIS
-#include "ahc_vdsl.hpp"
 
 int main() {
-    using namespace ahc_vdsl;
+    // あなたのコード
+}
 
-    // 標準エラー出力に出力
+// ahc_vdsl.hpp の全内容をここにコピーペースト
+// ...
+```
+
+ローカルでビジュアライザ出力を確認したい場合は、コピーペースト内容の直前に `#define ENABLE_VIS` を追加してください。
+
+### Feature フラグ
+
+- `ENABLE_VIS` 未定義: ビジュアライザ出力を行いません。クラスは空のスタブに置き換えられますが、visualizerに渡すために生成したデータは消えないため注意してください
+- `ENABLE_VIS` が定義されている場合: ビジュアライザ出力を生成します。ローカルテスト時に使用。
+
+```bash
+# ビジュアライザ出力なし（本番提出用、デフォルト）
+g++ -std=c++23 -O2 main.cpp -o main
+
+# ビジュアライザ出力あり（ローカルテスト用）
+g++ -std=c++23 -O2 -DENABLE_VIS main.cpp -o main
+```
+
+### 基本的な使い方
+
+#### 1. シンプルなグリッド表示
+
+```cpp
+using namespace ahc_vdsl;
+
+int main() {
     VisRoot root;
 
-    // またはファイルに出力
-    // VisRoot root("output.txt");
+    // 10x10のグリッドを作成し、フレームに追加
+    VisGrid grid(10, 10);
 
-    // グリッドを作成
-    VisGrid grid(5, 5);
-    grid.update_cell_color(2, 2, RED);
+    VisFrame frame;
+    frame.add_grid(grid);
+    frame.set_score("12345");
 
-    // フレームを追加
-    VisFrame frame = VisFrame::new_grid(grid, "12345");
-    frame.add_textarea("Debug info");
-    root.add_frame("main", frame);
+    root.add_frame("default", frame);
 
-    // 出力
+    // 全てのフレームを出力
     root.output_all();
-
-    return 0;
 }
 ```
 
-### Visualization無効時（本番提出時）
+#### 2. セルの色とテキストを設定
 
 ```cpp
-// #define ENABLE_VIS を削除またはコメントアウト
-#include "ahc_vdsl.hpp"
+VisGrid grid(10, 10);
+// セルの色を変更 (x, y) = (3, 5) を赤に
+grid.update_cell_color(3, 5, RED);
+// セルにテキストを表示
+grid.update_text(0, 0, "A");
+grid.update_text(1, 0, "B");
+```
 
-int main() {
-    using namespace ahc_vdsl;
+#### 3. 複数フレームのアニメーション
 
-    // 同じコードを書いても、すべてゼロコストで最適化される
-    VisRoot root;
-    VisGrid grid(5, 5);
-    grid.update_cell_color(2, 2, RED);
+```cpp
+VisRoot root;
 
-    VisFrame frame = VisFrame::new_grid(grid, "12345");
+for (int step = 0; step < 100; step++) {
+    // 現在位置をハイライト
+    int px = step % 10, py = step / 10;
+    VisGrid grid(10, 10);
+    grid.update_cell_color(px, py, BLUE);
+
+    VisTextArea textarea("StepInfo", "Step: " + std::to_string(step));
+    textarea.set_height(150)
+            .set_text_color("#1565c0")
+            .set_fill_color("#e3f2fd");
+
+    VisFrame frame;
+    frame.add_grid(grid);
+    frame.set_score(std::to_string(step * 100));
+    frame.add_textarea(textarea);
+
     root.add_frame("main", frame);
-    root.output_all();  // 何もしない
-
-    return 0;
 }
+
+root.output_all();
 ```
 
-## コンパイル方法
+#### 4. 複数モードの使用
 
-### Visualization有効
-```bash
-g++ -std=c++17 -O2 -DENABLE_VIS main.cpp -o main
+```cpp
+VisRoot root;
+
+// メインモード用のフレーム
+VisGrid main_grid(20, 20);
+VisFrame main_frame;
+main_frame.add_grid(main_grid);
+main_frame.set_score("1000");
+root.add_frame("main", main_frame);
+
+// デバッグモード用のフレーム
+VisGrid debug_grid(5, 5);
+VisFrame debug_frame;
+debug_frame.add_grid(debug_grid);
+debug_frame.enable_debug();  // 生のコマンドを表示
+root.add_frame("debug", debug_frame);
+
+root.output_all();
 ```
 
-### Visualization無効（高速化）
-```bash
-g++ -std=c++17 -O2 main.cpp -o main
+#### 5. 2D平面描画
+
+```cpp
+Vis2DPlane plane(100.0, 100.0);
+// 円を追加
+plane.add_circle(BLACK, RED, 50.0, 50.0, 10.0);
+// 線を追加
+plane.add_line(BLUE, 2.0, 0.0, 0.0, 100.0, 100.0);
+// 多角形を追加
+plane.add_polygon(GREEN, YELLOW, {
+    {10.0, 10.0}, {90.0, 10.0}, {90.0, 90.0}, {10.0, 90.0}
+});
+
+VisFrame frame;
+frame.add_2d_plane(plane);
+frame.set_score("5000");
 ```
 
-## API
+#### 6. キャンバスに複数のアイテムを配置
 
-### VisRoot
-- `VisRoot()` - 標準エラー出力に出力
-- `VisRoot(const std::string& filepath)` - ファイルに出力
-- `void add_frame(const std::string& mode, const VisFrame& frame)`
-- `void add_frames(const std::string& mode, const std::vector<VisFrame>& frames)`
-- `const std::vector<VisFrame>* get_frames(const std::string& mode) const`
-- `void output_all()`
+```cpp
+// 左側にグリッドを配置
+VisGrid grid1(20, 20, ItemBounds(0.0, 0.0, 800.0, 800.0));
+grid1.update_cell_color(5, 5, RED);
 
-### VisCanvas
-- `VisCanvas(double h = 800, double w = 800)` - キャンバスを作成
-- `std::string to_vis_string(const std::string& mode)` - コマンド文字列を生成
+// 右側に別のグリッドを配置
+VisGrid grid2(10, 1, ItemBounds(850.0, 0.0, 950.0, 800.0));
 
-### ItemBounds
-- `ItemBounds(double left, double top, double right, double bottom)` - キャンバス内での位置を指定
+VisFrame frame;
+// キャンバスサイズを設定 (高さ800, 幅1000)
+frame.set_canvas(VisCanvas(800.0, 1000.0));
+frame.add_grid(grid1);
+frame.add_grid(grid2);
+frame.set_score("12345");
+```
 
-### VisGridConf
-- `VisGridConf(Color border = BLACK, Color text = BLACK, Color bg = WHITE)` - グリッド設定を作成
+#### 7. ファイルへの出力
 
-### VisGrid
-- `VisGrid(int h, int w, VisGridConf conf = VisGridConf())` - グリッドを作成
-- `VisGrid(int h, int w, ItemBounds bounds, VisGridConf conf = VisGridConf())` - 位置を指定してグリッドを作成
-- `void set_bounds(const ItemBounds& bounds)` - 位置を設定
-- `void update_cell_color(int y, int x, Color color)`
-- `void add_line(const std::vector<std::pair<int, int>>& line, Color color)`
-- `void remove_wall_vertical(int y, int x)`
-- `void add_wall_vertical(int y, int x)`
-- `void remove_wall_horizontal(int y, int x)`
-- `void add_wall_horizontal(int y, int x)`
-- `static VisGrid from_cells(const std::vector<std::vector<T>>& cells)`
+```cpp
+// 標準エラー出力の代わりにファイルに出力
+VisRoot root("output.txt");
 
-### Vis2DPlane
-- `Vis2DPlane(double h, double w)` - 2D平面を作成
-- `Vis2DPlane(double h, double w, const ItemBounds& bounds)` - 位置を指定して2D平面を作成
-- `void set_bounds(const ItemBounds& bounds)` - 位置を設定
-- `void add_circle(Color stroke, Color fill, double x, double y, double r)`
-- `void add_line(Color color, double ax, double ay, double bx, double by)`
-- `void add_polygon(Color stroke, Color fill, const std::vector<std::pair<double, double>>& vertices)`
+// ... フレームを追加 ...
 
-### VisFrame
-- `VisFrame()` - 空のフレームを作成
-- `static VisFrame new_grid(const VisGrid& grid, const std::string& score)` - グリッドとスコアでフレームを作成
-- `static VisFrame new_2d_plane(const Vis2DPlane& plane, const std::string& score)` - 2D平面とスコアでフレームを作成
-- `void set_canvas(const VisCanvas& canvas)` - キャンバスを設定
-- `void add_grid(const VisGrid& grid)` - グリッドを追加
-- `void add_2d_plane(const Vis2DPlane& plane)` - 2D平面を追加
-- `void add_item(const VisItem& item)` - アイテムを追加
-- `void add_textarea(const std::string& text)` - テキストエリアを追加
-- `void enable_debug()` - デバッグ表示を有効にする
-- `void disable_debug()` - デバッグ表示を無効にする
+root.output_all();  // output.txt に書き込まれる
+```
 
-### 色定数
-`WHITE`, `BLACK`, `GRAY`, `RED`, `BLUE`, `GREEN`, `YELLOW`, `CYAN`, `MAGENTA`
+#### 8. バーグラフの表示
 
-## テスト
+```cpp
+VisBarGraph bar_graph(BLUE, 0.0, 100.0);
+bar_graph.add_item("Speed", 85.5)
+         .add_item("Accuracy", 92.0)
+         .add_item("Coverage", 78.3);
+
+VisFrame frame;
+frame.add_bar_graph(bar_graph);
+frame.set_score("12345");
+```
+
+### 定義済みの色
+
+以下の色が定数として定義されています:
+
+| 定数      | 色                 |
+| --------- | ------------------ |
+| `WHITE`   | 白 (#FFFFFF)       |
+| `BLACK`   | 黒 (#000000)       |
+| `GRAY`    | 灰 (#808080)       |
+| `RED`     | 赤 (#FF0000)       |
+| `GREEN`   | 緑 (#00FF00)       |
+| `BLUE`    | 青 (#0000FF)       |
+| `YELLOW`  | 黄 (#FFFF00)       |
+| `CYAN`    | シアン (#00FFFF)   |
+| `MAGENTA` | マゼンタ (#FF00FF) |
+
+カスタム色は `Color(r, g, b)` で作成できます:
+
+```cpp
+Color custom_color(128, 64, 255);
+```
+
+文字列からの生成も可能です:
+
+```cpp
+Color from_hex = Color::from_string("#FF8800");
+```
+
+### 主要な構造体
+
+| 構造体        | 説明                                                         |
+| ------------- | ------------------------------------------------------------ |
+| `VisRoot`     | 全てのフレームを管理するルートオブジェクト                   |
+| `VisFrame`    | 1つのフレーム（COMMITで区切られる単位）                      |
+| `VisCanvas`   | キャンバスのサイズ設定                                       |
+| `VisGrid`     | グリッド（盤面）の描画                                       |
+| `Vis2DPlane`  | 2次元平面上の図形描画                                        |
+| `VisTextArea` | テキストエリアの表示（タイトル、高さ、色のカスタマイズ可能） |
+| `VisBarGraph` | バーグラフの表示                                             |
+| `ItemBounds`  | キャンバス内でのアイテムの位置指定                           |
+| `Color`       | RGB色                                                        |
+
+#### VisTextArea
+
+テキストエリアを作成し、カスタマイズします。高さと色はオプションで、デフォルト値が設定されます。
+
+```cpp
+VisTextArea textarea("Title", "Content text");
+textarea.set_height(300)                     // 高さ（オプション、デフォルト: 200）
+        .set_text_color("#ff0000")           // 文字色（オプション、デフォルト: #000000）
+        .set_fill_color("#ffff00");          // 背景色（オプション、デフォルト: #ffffff）
+
+// 出力されるDSL: $v(MODE) TEXTAREA Title 300 #ff0000 #ffff00 Content text
+```
+
+#### VisBarGraph
+
+バーグラフを作成し、データを追加します。
+
+```cpp
+VisBarGraph bar_graph(BLUE, 0.0, 100.0);  // 色、Y軸最小値、Y軸最大値
+
+// 個別に追加（method chaining 対応）
+bar_graph.add_item("Label1", 50.0)
+         .add_item("Label2", 75.0);
+
+// 出力されるDSL:
+// $v(MODE) BAR_GRAPH #0000FF 0 100
+// 2 Label1 50 Label2 75
+
+// まとめて追加する場合は add_items を使用（こちらも chaining 対応）
+std::vector<BarGraphItem> items = {
+    BarGraphItem("A", 30.0),
+    BarGraphItem("B", 60.0),
+};
+bar_graph.add_items(items);
+```
+
+### テスト
 
 ```bash
 make test
 ```
 
-または
+または個別に実行:
 
 ```bash
-# Visualization有効時のテスト（ahc_vdsl_test.cpp内で#define ENABLE_VISを定義）
-g++ -std=c++17 -O2 ahc_vdsl_test.cpp -o test && ./test
+# Visualization有効時のテスト
+g++ -std=c++23 -O2 -o ahc_vdsl_test ahc_vdsl_test.cpp && ./ahc_vdsl_test
 
 # Visualization無効時のテスト
-g++ -std=c++17 -O2 ahc_vdsl_test_disabled.cpp -o test_disabled && ./test_disabled
+g++ -std=c++23 -O2 -o ahc_vdsl_test_disabled ahc_vdsl_test_disabled.cpp && ./ahc_vdsl_test_disabled
 ```
 
-## ゼロコストについて
+### ゼロコストについて
 
-`ENABLE_VIS` が定義されていない場合、すべての関数は空の実装になり、コンパイラの最適化により実行時のオーバーヘッドは完全に0になります。
-
-## Rust版との違い
-
-- C++では空の構造体のサイズが1バイト（Rustは0バイト）ですが、最適化により実質的にゼロコストになります
-- メモリ管理の違いにより、一部の実装（VisFrame）でポインタを使用しています
-
-## ライセンス
-
-MIT License
+`ENABLE_VIS` が定義されていない場合、すべてのクラスが空のスタブに置き換えられ、関数呼び出し自体はゼロコストとなります。ただし、引数として渡される式の評価は関数呼び出しの前に行われるため残ります。例えば `add_line` に渡す座標リストの生成や `from_cells` に渡す行列の計算などは、`ENABLE_VIS` の有無に関係なく実行されます。
