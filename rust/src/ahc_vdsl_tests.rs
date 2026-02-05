@@ -305,6 +305,16 @@ fn test_textarea_custom() {
 
 #[cfg(feature = "vis")]
 #[test]
+fn test_textarea_empty_text() {
+    let textarea = VisTextArea::new("EmptyInfo".to_string(), "".to_string());
+    let output = VisFrame::new()
+        .add_textarea(textarea)
+        .to_vis_string("test");
+    assert!(output.contains("$v(test) TEXTAREA EmptyInfo 200 #000000 #ffffff \"\""));
+}
+
+#[cfg(feature = "vis")]
+#[test]
 fn test_visframe_with_2dplane() {
     let output = VisFrame::new()
         .add_2d_plane(Vis2DPlane::new(100.0, 100.0, None).add_circle(RED, BLUE, 50.0, 50.0, 10.0))

@@ -235,10 +235,15 @@ pub mod ahc_vdsl {
                     let height = textarea.height.unwrap_or(200);
                     let text_color = textarea.text_color.as_deref().unwrap_or("#000000");
                     let fill_color = textarea.fill_color.as_deref().unwrap_or("#ffffff");
+                    let text_output = if textarea.text.is_empty() {
+                        "\"\"".to_string()
+                    } else {
+                        textarea.text.clone()
+                    };
                     writeln!(
                         &mut output,
                         "$v({}) TEXTAREA {} {} {} {} {}",
-                        mode, textarea.title, height, text_color, fill_color, textarea.text
+                        mode, textarea.title, height, text_color, fill_color, text_output
                     )
                     .unwrap();
                 }

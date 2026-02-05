@@ -493,7 +493,7 @@ public:
                << ta.get_height() << " "
                << ta.get_text_color() << " "
                << ta.get_fill_color() << " "
-               << ta.get_text() << "\n";
+               << (ta.get_text().empty() ? "\"\"" : ta.get_text()) << "\n";
         }
 
         for (const auto& bg : bar_graphs) {

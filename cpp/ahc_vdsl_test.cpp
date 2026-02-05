@@ -301,6 +301,17 @@ void test_textarea_custom() {
     std::cout << "✓ test_textarea_custom passed\n";
 }
 
+void test_textarea_empty_text() {
+    VisTextArea ta("EmptyInfo", "");
+
+    VisFrame frame;
+    frame.add_textarea(ta);
+
+    std::string output = frame.to_vis_string("test");
+    assert(contains(output, "$v(test) TEXTAREA EmptyInfo 200 #000000 #ffffff \"\""));
+    std::cout << "✓ test_textarea_empty_text passed\n";
+}
+
 void test_visframe_with_2dplane() {
     Vis2DPlane plane(100.0, 100.0);
     plane.add_circle(RED, BLUE, 50.0, 50.0, 10.0);
@@ -564,6 +575,7 @@ int main() {
     test_visframe_with_grid();
     test_textarea_basic();
     test_textarea_custom();
+    test_textarea_empty_text();
     test_visframe_with_2dplane();
     test_visframe_with_canvas();
     test_visroot_add_frame();
