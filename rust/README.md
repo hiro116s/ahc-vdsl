@@ -6,38 +6,39 @@
 `rust/src/ahc_vdsl.rs` を使うと、プロトコル仕様を意識せずに型安全にビジュアライザ出力を生成できます。
 
 ### セットアップ
-
-1. `ahc_vdsl.rs` をプロジェクトにコピーします
+1. `src/ahc_vdsl.rs` をコピーし、`main.rs`にペーストします。
 2. `Cargo.toml` に以下を追加します:
 
 ```toml
-[dependencies]
-rustc-hash = "=1.1.0"
-
 [features]
-default = ["vis"]
 vis = []
 ```
 
-3. `main.rs` または `lib.rs` でモジュールを宣言します:
+3. `main.rs` 上で`ahc_vdsl` moduleを用いてコードを書く
 
 ```rust
-mod ahc_vdsl;
-use ahc_vdsl::ahc_vdsl::*;
+use crate::ahc_vdsl::*;
 ```
 
 ### Feature フラグ
 
-- `vis` feature が有効な場合: 実際にビジュアライザ出力を生成します（デフォルト）
-- `vis` feature が無効な場合: 全ての関数呼び出しがゼロコストで無視されます（本番提出時に最適化）
+- `vis` feature が有効な場合: 実際にビジュアライザ出力を生成します
+- `vis` feature が無効な場合: 全ての関数呼び出しが無視され、出力には何も表示されなくなります。ただし、visualizerに渡すために生成したデータは消えないため注意してください
 
 ```bash
-# ビジュアライザ出力あり（デフォルト）
-cargo run
+# ビジュアライザ出力あり
+cargo run --features vis
 
 # ビジュアライザ出力なし（本番用）
-cargo run --no-default-features
+cargo run
 ```
+
+### 基本的な使い方
+
+#### 1. シンプルなグリッド表示
+
+```rust
+use crate::ahc_vdsl::*;
 
 ### 基本的な使い方
 
@@ -200,16 +201,16 @@ let custom_color = Color::new(128, 64, 255);
 
 ### 主要な構造体
 
-| 構造体       | 説明                                       |
-| ------------ | ------------------------------------------ |
-| `VisRoot`    | 全てのフレームを管理するルートオブジェクト |
-| `VisFrame`   | 1つのフレーム（COMMITで区切られる単位）    |
-| `VisCanvas`  | キャンバスのサイズ設定                     |
-| `VisGrid`    | グリッド（盤面）の描画                     |
-| `Vis2DPlane` | 2次元平面上の図形描画                      |
-| `VisTextArea`| テキストエリアの表示（タイトル、高さ、色のカスタマイズ可能） |
-| `ItemBounds` | キャンバス内でのアイテムの位置指定         |
-| `Color`      | RGB色                                      |
+| 構造体        | 説明                                                         |
+| ------------- | ------------------------------------------------------------ |
+| `VisRoot`     | 全てのフレームを管理するルートオブジェクト                   |
+| `VisFrame`    | 1つのフレーム（COMMITで区切られる単位）                      |
+| `VisCanvas`   | キャンバスのサイズ設定                                       |
+| `VisGrid`     | グリッド（盤面）の描画                                       |
+| `Vis2DPlane`  | 2次元平面上の図形描画                                        |
+| `VisTextArea` | テキストエリアの表示（タイトル、高さ、色のカスタマイズ可能） |
+| `ItemBounds`  | キャンバス内でのアイテムの位置指定                           |
+| `Color`       | RGB色                                                        |
 
 #### VisTextArea
 
