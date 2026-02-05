@@ -51,6 +51,14 @@
         "category": "past_contest"
     },
     {
+        "id": "ahc060",
+        "title": "AHC060",
+        "description": "AHC060のビジュアライザ",
+        "dataFile": "ahc060.txt",
+        "codeUrl": "https://atcoder.jp/contests/ahc060/submissions/73016186",
+        "category": "past_contest"
+    },
+    {
         "id": "chokudai001",
         "title": "Chokudai Contest 001",
         "description": "Chokudai Contest 001のビジュアライザ",
